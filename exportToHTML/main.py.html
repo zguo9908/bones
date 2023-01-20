@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>main.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #6a8759;}
+.s3 { color: #808080;}
+.s4 { color: #6897bb;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+main.py</font>
+</center></td></tr></table>
+<pre><span class="s0">from </span><span class="s1">krave.experiment.hardware_test </span><span class="s0">import </span><span class="s1">PiTest</span>
+<span class="s0">from </span><span class="s1">krave.experiment.experiment_test </span><span class="s0">import </span><span class="s1">Task</span>
+
+
+<span class="s0">def </span><span class="s1">main(mouse</span><span class="s0">, </span><span class="s1">exp_name</span><span class="s0">, </span><span class="s1">hardware_config_name):</span>
+    <span class="s0">pass</span>
+
+
+<span class="s0">if </span><span class="s1">__name__ == </span><span class="s2">'__main__'</span><span class="s1">:</span>
+
+    <span class="s3"># PiTest(&quot;RZ001&quot;, &quot;exp1&quot;).test_visual_with_lick()</span>
+    <span class="s3"># PiTest(&quot;RZ001&quot;, &quot;exp1&quot;).test_visual_tk()</span>
+    <span class="s3"># PiTest(&quot;RZ001&quot;, &quot;exp1&quot;).test_visual_cue()</span>
+    <span class="s1">PiTest(</span><span class="s2">&quot;RZ001&quot;</span><span class="s0">, </span><span class="s2">&quot;exp1&quot;</span><span class="s1">).test_water(run_time=</span><span class="s4">100</span><span class="s0">, </span><span class="s1">open_time=</span><span class="s4">0.5</span><span class="s0">, </span><span class="s1">cool_time=</span><span class="s4">0.2</span><span class="s1">)</span>
+    <span class="s3">#  PiTest(&quot;RZ002&quot;, &quot;exp1&quot;).lick_validation(n_licks=10, time_limit=30)</span>
+    <span class="s3"># PiTest(&quot;RZ002&quot;, &quot;exp1&quot;).test_drawing_bg_time(avg_bg_time=3)</span>
+    <span class="s3"># Task(&quot;RZ001&quot;, &quot;exp1&quot;).session()</span>
+    <span class="s3">#Task(&quot;RZ007&quot;, &quot;exp1&quot;).shaping(1)</span>
+    <span class="s3"># PiTest(&quot;RZ001&quot;, &quot;exp1&quot;).spout_calibration()</span>
+    <span class="s3">#PiTest(&quot;RZ001&quot;, &quot;exp1&quot;).reset()</span>
+
+
+
+
+
+</pre>
+</body>
+</html>
