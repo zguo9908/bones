@@ -1,0 +1,37 @@
+import json
+
+
+import pexpect
+from pkg_resources import resource_string, resource_filename
+import sympy as sp
+
+
+def get_config(module, filename):
+    return json.loads(resource_string(module, filename))
+
+
+def get_path(module, filename):
+    return resource_filename(module, filename)
+
+def calculate_time_wait_optimal(time_bg):
+    """
+    calculates optimal wait time to get the max reward based on time spent in background
+    returns only the positive solution
+    :param time_bg: bg time length
+    :return: optimal wait time per trial
+    """
+    t = sp.Symbol('t', real=True)
+    r = 2 * t * sp.exp(-t / 10) / (t + time_bg)
+    r_prime = r.diff(t)
+    time_wait = sp.solve(r_prime, t)
+    if not time_wait:
+        # throws an error if solver gives an empty list
+        raise Exception('calculate_time_wait_optimal failed')
+    for i in time_wait:
+        if i > 0:
+            return round(i, 2)
+        elif i < 0:
+            continue
+        else:
+            raise ValueError('value not possible')
+
