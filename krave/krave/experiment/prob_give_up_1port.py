@@ -43,7 +43,7 @@ class GiveUpTask:
 
         # hardwares
         self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
-        self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "1", trial_type='s')
+        self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
         # print(self.spout.water_pin)
         self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.exp_config, forward)
         # self.camera_trigger = CameraTrigger(self.mouse, self.exp_config)
@@ -121,6 +121,8 @@ class GiveUpTask:
         self.state = states.IN_BACKGROUND
         self.lick_counter = 0
         self.total_reward_count = 0
+        self.num_miss_trial = 0
+        self.running = False
 
 
     def get_config(self):
@@ -140,6 +142,7 @@ class GiveUpTask:
         else:
             print(f"lick {self.lick_counter} at {time.time() - self.trial_start_time:.2f} seconds of the trial")
         self.lick_counter += 1
+
         string = self.get_string_to_log(f'{self.curr_reward_prob},1,lick')
         self.data_writer.log(string)
 
@@ -292,6 +295,13 @@ class GiveUpTask:
         self.state = states.TRIAL_ENDS
         string = self.get_string_to_log('nan,0,trial')
         self.data_writer.log(string)
+        self.check_session_status()
+        self.auditory.cue_off()
+        if self.running:
+            if self.block_trial_num + 1 == self.block_len:
+                self.end_block()
+            else:
+                self.start_trial()
 
 
     def start_consumption(self):
@@ -302,6 +312,7 @@ class GiveUpTask:
         string = self.get_string_to_log('nan,1,reward')
         self.data_writer.log(string)
         self.total_reward_count += 1
+        self.num_miss_trial = 0  # resets miss trial count
         print(f'reward delivered, {self.total_reward_count} total,'
               f' which is {self.total_reward_count * self.reward_size} ul')
 
@@ -333,6 +344,7 @@ class GiveUpTask:
         if self.auto_delivery:
             self.get_wait_time_optimal()
         self.session_start_time = time.time()
+        self.running = True
         string = self.get_string_to_log('nan,1,session')
         self.data_writer.log(string)
         self.start_block()
@@ -390,6 +402,26 @@ class GiveUpTask:
               f"starts at {self.block_start_time - self.session_start_time:.2f} seconds")
         self.start_trial()
 
+    def end_block(self):
+        self.data_writer.log(self.get_string_to_log('nan,0,block'))
+        self.start_block()
+
+    def check_session_status(self):
+        """check if session should end"""
+        if time.time() > self.session_start_time + self.exp_config['time_limit']:
+            print("time limit reached")
+            self.running = False
+        elif self.total_reward_count >= self.exp_config['max_reward_count']:
+            print('max_reward reached')
+            self.running = False
+        elif self.session_trial_num + 1 == self.total_trial_num:
+            print('total_trial_num reached')
+            self.running = False
+        elif self.num_miss_trial >= self.exp_config['max_missed_trial']:
+            print('max_missed_trial reached')
+            self.running = False
+        else:
+            self.running = True
 
     def run(self):
         """
@@ -403,89 +435,86 @@ class GiveUpTask:
 
         # t1 = Thread(target=StopButton)
         # t1.start()
-        try:
-            if self.calibrate:
-                self.spout.calibrate()
-            while self.session_start_time + self.time_limit > time.time():
-                self.spout.water_cleanup()
-                self.auditory.cue_cleanup()
-                if self.record:
-                    self.camera_trigger.square_wave(self.data_writer)
+        # try:
+        #     if self.calibrate:
+        #         self.spout.calibrate()
+        while self.running:
+            self.spout.water_cleanup()
+            self.auditory.cue_cleanup()
+            if self.record:
+                self.camera_trigger.square_wave(self.data_writer)
 
-                if self.state == states.IN_WAIT:
-                    if (time.time() - self.wait_start_time) // self.step_size > self.bin_num:
-                        self.bin_num += 1
+            if self.state == states.IN_WAIT:
+                if (time.time() - self.wait_start_time) // self.step_size > self.bin_num:
+                    self.bin_num += 1
 
-                lick_change = self.spout.lick_status_check()
-                if lick_change == -1:
-                    self.log_lick_ending()
-                elif lick_change == 1:
-                    self.log_lick()
+            lick_change = self.spout.lick_status_check()
+            if lick_change == -1:
+                self.log_lick_ending()
+            elif lick_change == 1:
+                self.log_lick()
 
-                    if not self.auto_delivery:
-                        # prob_not_rewarded = 1 - self.curr_block.reward_cdf[self.bin_num]
-                        # prob_rewarded_at_t = self.curr_block.reward_pdf[self.bin_num]
-                        # self.curr_reward_prob = (prob_rewarded_at_t / prob_not_rewarded) * self.overall_reward_prob
-                        if self.state == states.IN_WAIT:
-                            self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num]
-                            print(f'current bin number is {self.bin_num}')
-                            print(f"reward probability is {self.curr_reward_prob}")
-                            if self.curr_reward_prob > random.random():
-                                self.start_consumption()
-                            else:
-                                print('early lick fail the trial')
-                                self.end_trial()
-                        elif self.state == states.IN_BACKGROUND:
-                            print("still in back ground, restarting")
-                            self.start_background()
+                if not self.auto_delivery:
+                    # prob_not_rewarded = 1 - self.curr_block.reward_cdf[self.bin_num]
+                    # prob_rewarded_at_t = self.curr_block.reward_pdf[self.bin_num]
+                    # self.curr_reward_prob = (prob_rewarded_at_t / prob_not_rewarded) * self.overall_reward_prob
+                    if self.state == states.IN_WAIT:
+                        self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num]
+                        print(f'current bin number is {self.bin_num}')
+                        print(f"reward probability is {self.curr_reward_prob}")
+                        if self.curr_reward_prob > random.random():
+                            self.start_consumption()
+                        else:
+                            print('early lick fail the trial')
+                            self.end_trial()
+                    elif self.state == states.IN_BACKGROUND:
+                        print("still in back ground, restarting")
+                        self.start_background()
 
-                        # else:
-                        #     # lick is decision to leave
-                        #     print("licked before ")
-                        #     self.end_trial()
+            if self.state == states.IN_BACKGROUND and time.time() > self.background_start_time + self.time_bg_drawn:
+                # bg time passed, wait time starts
+                self.start_wait()
 
-                if self.state == states.IN_BACKGROUND and time.time() > self.background_start_time + self.time_bg_drawn:
-                    # bg time passed, wait time starts
-                    self.start_wait()
+            if self.state == states.IN_CONSUMPTION and time.time() > self.consumption_start + self.consumption_time:
+                # consumption time passed, trials ends
+                self.end_trial()
 
-                if self.state == states.IN_CONSUMPTION and time.time() > self.consumption_start + self.consumption_time:
-                    # consumption time passed, trials ends
+            if self.state == states.IN_WAIT:
+                if self.auto_delivery and time.time() > self.wait_start_time + self.time_wait_optimal:
+                    self.start_consumption()
+                elif not self.auto_delivery and time.time() > self.wait_start_time + self.max_wait_time:
+                    print('no lick, miss trial')
+                    self.num_miss_trial += 1
                     self.end_trial()
 
-                if self.state == states.IN_WAIT:
-                    if self.auto_delivery and time.time() > self.wait_start_time + self.time_wait_optimal:
-                        self.start_consumption()
-                    elif not self.auto_delivery and time.time() > self.wait_start_time + self.max_wait_time:
-                        print('no lick, miss trial')
-                        self.end_trial()
+            if self.state == states.IN_PUNISHMENT and time.time() > self.punishment_start + self.punishment_time:
+                # punishment ends -> bg time
+                self.end_punishment()
 
-                if self.state == states.IN_PUNISHMENT and time.time() > self.punishment_start + self.punishment_time:
-                    # punishment ends -> bg time
-                    self.end_punishment()
-
-                if  self.bin_num > len(self.curr_block.reward_cdf)-1:
-                    print("exceeds max bin numbers in the trial, starting next one")
-                    self.end_trial()
-
-                # session ends if total num of trials is reached, or if reward received is larger than 1.5 ml
-                if self.state == states.TRIAL_ENDS:
-                    self.auditory.cue_off()
-                    if self.session_trial_num + 1 == self.total_trial_num:
-                        print('total_trial_num reached')
-                        break
-                    elif self.total_reward_count >= self.max_reward_count:
-                        print('max reward count reached')
-                        break
-                    elif self.block_trial_num + 1 == self.block_len:
-                        print("starting next block")
-                        self.start_block()
-                    else:
-                        self.start_trial()
-                # if stop:
-                #     stopped = True
-                #     print('stopped via stop button')
-                #     break
-        finally:
+            if  self.bin_num > len(self.curr_block.reward_cdf)-1:
+                print("exceeds max bin numbers in the trial, starting next one")
+                self.end_trial()
+            #
+            # # session ends if total num of trials is reached, or if reward received is larger than 1.5 ml
+            # if self.state == states.TRIAL_ENDS:
+            #     self.auditory.cue_off()
+            #     if self.session_trial_num + 1 == self.total_trial_num:
+            #         print('total_trial_num reached')
+            #         break
+            #     elif self.total_reward_count >= self.max_reward_count:
+            #         print('max reward count reached')
+            #         break
+            #     elif self.block_trial_num + 1 == self.block_len:
+            #         print("starting next block")
+            #         self.start_block()
+            #     else:
+            #         self.start_trial()
+            # if stop:
+            #     stopped = True
+            #     print('stopped via stop button')
+            #     break
+    # finally:
+        if not self.running:
             self.end()
 
 

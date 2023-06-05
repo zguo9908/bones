@@ -27,11 +27,11 @@ class DataWriter:
         self.folder_name = self.mouse + '_' + self.datetime + '_' + self.training
         # self.data_write_path = os.path.join('/media', 'pi', 'rbz_data', self.folder_name)  # thumb drive
         self.data_write_path = os.path.join('/home', 'pi', 'data', 'behavior_data', self.folder_name)
-        # path on pi
+        # path  on pi
         print("path on pi: ", self.data_write_path)
         self.filename = "data_" + self.mouse + "_" + self.datetime + ".txt"
         # self.data_send_path = os.path.join('C:', 'Users', self.user, 'Documents', 'behavior_data')
-        self.data_send_path = os.path.join('D:', 'behavior_data', self.mouse)
+        self.data_send_path = os.path.join('D:', 'behavior_data', 'curr_params',self.mouse)
         self.f = None
 
         os.mkdir(self.data_write_path) #somehow this works for ziyi
