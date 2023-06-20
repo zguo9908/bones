@@ -459,7 +459,7 @@ class GiveUpTask:
                     # prob_rewarded_at_t = self.curr_block.reward_pdf[self.bin_num]
                     # self.curr_reward_prob = (prob_rewarded_at_t / prob_not_rewarded) * self.overall_reward_prob
                     if self.state == states.IN_WAIT:
-                        self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num]
+                        self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num] * self.curr_overall_reward_prob
                         print(f'current bin number is {self.bin_num}')
                         print(f"reward probability is {self.curr_reward_prob}")
                         if self.curr_reward_prob > random.random():
@@ -486,29 +486,13 @@ class GiveUpTask:
                     print('no lick, miss trial')
                     self.num_miss_trial += 1
                     self.end_trial()
-
-            if self.state == states.IN_PUNISHMENT and time.time() > self.punishment_start + self.punishment_time:
-                # punishment ends -> bg time
-                self.end_punishment()
-
-            if  self.bin_num > len(self.curr_block.reward_cdf)-1:
+            if self.bin_num > len(self.curr_block.reward_cdf) - 1:
                 print("exceeds max bin numbers in the trial, starting next one")
                 self.end_trial()
-            #
-            # # session ends if total num of trials is reached, or if reward received is larger than 1.5 ml
-            # if self.state == states.TRIAL_ENDS:
-            #     self.auditory.cue_off()
-            #     if self.session_trial_num + 1 == self.total_trial_num:
-            #         print('total_trial_num reached')
-            #         break
-            #     elif self.total_reward_count >= self.max_reward_count:
-            #         print('max reward count reached')
-            #         break
-            #     elif self.block_trial_num + 1 == self.block_len:
-            #         print("starting next block")
-            #         self.start_block()
-            #     else:
-            #         self.start_trial()
+
+            # if self.state == states.IN_PUNISHMENT and time.time() > self.punishment_start + self.punishment_time:
+            #     # punishment ends -> bg time
+            #     self.end_punishment()
             # if stop:
             #     stopped = True
             #     print('stopped via stop button')
@@ -517,6 +501,7 @@ class GiveUpTask:
         if not self.running:
             self.end()
 
+#no longer using punishments
 
     def start_punishment(self):
         """starts punishment time, logs using data writer, trial does not restart"""

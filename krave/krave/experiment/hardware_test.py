@@ -4,15 +4,13 @@ from krave import utils
 # from krave.hardware.auditory import Auditory
 from krave.hardware.auditory import Auditory
 from krave.hardware.spout import Spout
-from krave.hardware.visual import Visual
 from krave.hardware.trigger import Trigger
-from krave.hardware.visual_tk import Visual_tk
 from krave.output.data_writer import DataWriter
 import numpy as np
 import numpy.core.multiarray
 import RPi.GPIO as GPIO
 import pygame
-import tkinter
+
 
 def reward_function(t):
     return .1

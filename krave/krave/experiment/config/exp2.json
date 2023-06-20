@@ -7,12 +7,14 @@
   "reward_size": 0.15,
   "hardware_setup": "setup1",
   "auto_end": true,
-  "timescapes": {"s": [1,0.6,2], "l": [3,0.9,2]},
+  "timescapes": {"s": [1,0.6], "l": [3,0.9]},
+  "background": {"ll": [3],"ss": [2]},
   "auditory_cue_frequency": {"s":[5000],"l": [8000]},
   "auditory_display_duration": 0.5,
   "step_size": 0.1,
   "max_reward_count": 300,
   "total_trials_median": 500,
   "session_length_range": 5,
-  "time_bg_range": 0.5
+  "time_bg_range": 0.5,
+  "forced_trial_perc": 0.8
 }

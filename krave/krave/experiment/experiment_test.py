@@ -7,7 +7,7 @@ from krave import utils
 from krave.hardware.spout import Spout
 from krave.hardware.visual import Visual
 from krave.hardware.trigger import Trigger
-from krave.hardware.visual_tk import Visual_tk
+# from krave.hardware.visual_tk import Visual_tk
 from krave.output.data_writer import DataWriter
 
 import sympy as sp

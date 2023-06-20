@@ -1,6 +1,6 @@
 from krave import utils
-import board
-import pulseio
+# import board
+# import pulseio
 import RPi.GPIO as GPIO
 import time
 

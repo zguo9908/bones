@@ -33,7 +33,7 @@ class DataWriter:
         # self.data_send_path = os.path.join('C:', 'Users', self.user, 'Documents', 'behavior_data')
         self.data_send_path = os.path.join('D:', 'behavior_data', 'curr_params',self.mouse)
         self.f = None
-
+        print(self.data_write_path)
         os.mkdir(self.data_write_path) #somehow this works for ziyi
        # os.system(f'sudo -u {self.pi_user_name} mkdir -p ' + self.data_write_path)  # make dir for data write path
         print("cwd: ", os.getcwd())
