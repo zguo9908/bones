@@ -16,6 +16,7 @@ class ChoiceTask:
     def __init__(self, mouse, exp_name, session_type, calibrate=False, record=False):
 
        # basic config
+        self.time_wait_optimal = None
         self.mouse = mouse
         self.exp_name = exp_name
         self.exp_config = self.get_config()
@@ -54,8 +55,8 @@ class ChoiceTask:
         self.bin_num = None
         self.num_miss_trial = None
         self.consumption_start = None
-        self.choice_trial_num = None
-        self.force_trial_num = None
+        # self.choice_trial_num = None
+        # self.force_trial_num = None
         self.trial_type = None
         self.s1l2 = None
         self.time_array = np.round(np.arange(0, self.max_wait_time, self.step_size),
@@ -73,14 +74,6 @@ class ChoiceTask:
         self.reward_cdf2 = None
         self.overall_reward_prob1 = None
         self.overall_reward_prob2 = None
-
-    def get_session_structure(self):
-
-        self.total_trial_num = random.randint(self.total_trials_median - self.session_length_range,
-                                              self.total_trials_median + self.session_length_range)
-        self.force_trial_num = math.floor(self.total_trial_num * self.force_perc)
-        self.choice_trial_num = self.total_trial_num - self.force_trial_num
-    #     a session would start with forced trials and
 
     def get_string_to_log(self, event):
         return f'{time.time() - self.trial_start_time},{time.time() - self.wait_start_time}, {self.trial_type}' \
@@ -104,7 +97,7 @@ class ChoiceTask:
         self.total_trial_num = random.randint(self.total_trials_median-self.session_length_range,
                                              self.total_trials_median+self.session_length_range)
         # self.force_trial_num = math.floor(self.total_trial_num * self.force_perc)
-        # self.choice_trial_num = self.total_trial_num - self.force_trial_num
+        # self .choice_trial_num = self.total_trial_num - self.force_trial_num
         self.session_trial_list = []
         self.trial_bg_list = []
         for i in range(self.total_trial_num):
@@ -153,6 +146,19 @@ class ChoiceTask:
             print(f'time_wait_optimal: {self.time_wait_optimal}')
 
     def get_wait_time_optimal(self):
+        """
+        makes a dictionary with block num as key and a list of optimal wait time for each trial as values
+        runs for shaping tasks when reward delivery is not lick triggered
+        this function is a bit slow, so must be run before session starts
+        """
+        print('Calculating optimal wait times')
+        count = 0  # used
+
+        for trl in range(1,self.session_trial_list):
+            self.optimal_list[trl] = utils.calculate_time_wait_optimal(self.session_bg_time[trl])
+            count += 1
+        if count != self.total_trial_num:
+            raise Exception(f'Missing {self.total_trial_num - count} optimal values!')
 
 
     def log_lick(self, spout):

@@ -3,7 +3,7 @@ import time
 from krave import utils
 import RPi.GPIO as GPIO
 import numpy as np
-import sklearn
+# import sklearn
 from sklearn.linear_model import LinearRegression
 
 
@@ -16,7 +16,8 @@ class Spout:
 
         self.lick_pin = self.hardware_config['spouts'][spout_name][0]
         self.water_pin = self.hardware_config['spouts'][spout_name][1]
-
+        # print(self.lick_pin)
+        # print(self.water_pin)
         self.test_opening_times = [0.01, 0.03, 0.05, 0.08, 0.1, 0.15]
         # self.total_open_times = [1, 3, 5, 8, 10, 15]
         # self.water_weights = [0.06, 0.16, 0.21, 0.33, 0.43, 0.58]
@@ -38,7 +39,7 @@ class Spout:
         previous status"""
         self.lick_record = np.roll(self.lick_record, 1)
         self.lick_record[0] = GPIO.input(self.lick_pin)
-        #print(self.lick_record[0])
+        # print(self.lick_record[0])
         change_bool = np.all(self.lick_record != self.lick_status)
         change = 0 if not change_bool else 1 if self.lick_status == 0 else -1
         self.lick_status += change

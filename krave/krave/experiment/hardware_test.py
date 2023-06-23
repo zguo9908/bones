@@ -51,6 +51,8 @@ class PiTest:
             testing_spout = self.spout2
         else:
             print("no more than 2 spouts assembled")
+        print(testing_spout.lick_pin)
+        print(testing_spout.water_pin)
 
         try:
             time_limit = 60

@@ -12,7 +12,7 @@ def get_config(module, filename):
 
 def get_path(module, filename):
     return resource_filename(module, filename)
-
+#
 def calculate_time_wait_optimal(time_bg):
     """
     calculates optimal wait time to get the max reward based on time spent in background
