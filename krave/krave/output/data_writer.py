@@ -31,7 +31,7 @@ class DataWriter:
         print("path on pi: ", self.data_write_path)
         self.filename = "data_" + self.mouse + "_" + self.datetime + ".txt"
         # self.data_send_path = os.path.join('C:', 'Users', self.user, 'Documents', 'behavior_data')
-        self.data_send_path = os.path.join('D:', 'behavior_data', 'curr_params',self.mouse)
+        self.data_send_path = os.path.join('D:', 'behavior_data', 'old_params',self.mouse)
         self.f = None
         print(self.data_write_path)
         os.mkdir(self.data_write_path) #somehow this works for ziyi

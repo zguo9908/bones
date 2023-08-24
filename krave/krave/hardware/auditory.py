@@ -26,13 +26,16 @@ class Auditory:
 
     def cue_on(self):
         GPIO.output(self.audio_pin, GPIO.HIGH)
+        print(f"playing freq at {self.audio_f}")
         self.buzzer.start(50)  # Set dutycycle
         self.buzz_on = True
         self.cue_on_time = time.time()
         # self.cue_displaying = True
 
     def set_frequency(self, trial_type):
-        self.buzzer.ChangeFrequency(self.exp_config['auditory_cue_frequency'][trial_type][0])
+        self.audio_f = self.exp_config['auditory_cue_frequency'][trial_type][0]
+        self.buzzer.ChangeFrequency(self.audio_f)
+        return
 
     def cue_off(self):
         GPIO.output(self.audio_pin, GPIO.LOW)

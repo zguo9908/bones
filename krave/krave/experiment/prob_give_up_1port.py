@@ -11,8 +11,8 @@ from krave.hardware.trigger import Trigger
 from krave.output.data_writer import DataWriter
 from krave.experiment import timescapes
 from krave.experiment import exp_utils
-import tkinter as tk
-import tkinter.font as font
+
+# from krave.hardware.pi_camera import CameraPi
 from threading import Thread
 # ONE PORT VERSION OF THE GIVE-UP TASK IN A HEAD FIXED SET UP.
 # EQUAL TO THE FORCED TRIALS.
@@ -44,8 +44,10 @@ class GiveUpTask:
         # hardwares
         self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
         self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
+        print(self.auditory.audio_f)
         # print(self.spout.water_pin)
         self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.exp_config, forward)
+        # self.camera = CameraPi()
         # self.camera_trigger = CameraTrigger(self.mouse, self.exp_config)
 
         # timescape information
@@ -62,14 +64,33 @@ class GiveUpTask:
         self.step_size = self.exp_config['step_size']
 
         # task type
-        if self.training == 'shaping':
-            self.auto_delivery = True
-            self.sometimes_not_rewarded = False
-        elif self.training == 'regular':
-            self.auto_delivery = False
-            self.sometimes_not_rewarded = True
-        else:
-            raise Exception('Training type invalid')
+        if self.training.startswith("block"):
+            self.have_blocks = True
+            if self.training == 'block_shaping':
+                self.auto_delivery = True
+                self.sometimes_not_rewarded = False
+            elif self.training == 'block_regular':
+                self.auto_delivery = False
+                self.sometimes_not_rewarded = True
+        elif self.training.startswith("no"):
+            self.have_blocks = False
+            if self.training == 'no_block_shaping_l':
+                self.auto_delivery = True
+                self.sometimes_not_rewarded = False
+                self.curr_mean_reward_time = self.mean_reward_time_l
+                self.curr_overall_reward_prob = self.overall_reward_prob_l
+            elif self.training == "no_block_regular_l":
+                self.auto_delivery = False
+                self.sometimes_not_rewarded = True
+                self.curr_mean_reward_time = self.mean_reward_time_l
+                self.curr_overall_reward_prob = self.overall_reward_prob_l
+            elif self.training == "no_block_regular_s":
+                self.auto_delivery = False
+                self.sometimes_not_rewarded = True
+                self.curr_mean_reward_time = self.mean_reward_time_s
+                self.curr_overall_reward_prob = self.overall_reward_prob_s
+            else:
+                raise Exception('Training type invalid')
 
         # session structure
         self.blocks = self.exp_config['exp_blocks']
@@ -214,33 +235,37 @@ class GiveUpTask:
 
         block_stats_list = []
         block_types = list(self.blocks.values())
-        first_block_stats = random.choice(block_types)
-        first_block = self.get_block(first_block_stats)
-        # first_block.n_of_trials = block_lengths[i]
-
-        for i in range(self.total_blocks):
-            if i % 2 == 0:
-                self.block_list.append(first_block)
-                block_stats_list.append(first_block_stats)
-                print(f'{first_block.mean_reward_time} is first block so are all even blocks')
-            else:
-                if first_block_stats == block_types[0]:
-                    print("first block is short so odd block is long")
-                    print(block_types[1])
-                    self.block_list.append(self.get_block(block_types[1]))
-                    block_stats_list.append(block_types[1])
-
+        if self.have_blocks:
+            first_block_stats = random.choice(block_types)
+            first_block = self.get_block(first_block_stats)
+            for i in range(self.total_blocks):
+                if i % 2 == 0:
+                    self.block_list.append(first_block)
+                    block_stats_list.append(first_block_stats)
+                    print(f'{first_block.mean_reward_time} is first block so are all even blocks')
                 else:
-                    print("first block is long so odd block is short")
-                    print(block_types[0])
-                    self.block_list.append(self.get_block(block_types[0]))
-                    block_stats_list.append(block_types[0])
-
-            self.block_list[i].n_of_trials = block_lengths[i]
+                    if first_block_stats == block_types[0]:
+                        print("first block is short so odd block is long")
+                        print(block_types[1])
+                        self.block_list.append(self.get_block(block_types[1]))
+                        block_stats_list.append(block_types[1])
+                    else:
+                        print("first block is long so odd block is short")
+                        print(block_types[0])
+                        self.block_list.append(self.get_block(block_types[0]))
+                        block_stats_list.append(block_types[0])
+                self.block_list[i].n_of_trials = block_lengths[i]
             print(block_stats_list)
+        else:
+             if self.training.endswith("s"):
+                 block_stats_list = [block_types[0]] * self.total_blocks
+                 self.block_list = [self.get_block(block_types[0])] * self.total_blocks
+             elif self.training.endswith("l"):
+                 block_stats_list = [block_types[1]] * self.total_blocks
+                 self.block_list = [self.get_block(block_types[1])] * self.total_blocks
+        # print(self.block_list)
+        # print(block_stats_list)
         count = 0
-
-
         # l is block length, t is block trial stats
         for i, (l, t) in enumerate(zip(block_lengths, block_stats_list)):
             # low and high background time, t[-1] is background time
@@ -252,19 +277,15 @@ class GiveUpTask:
             self.session_dict[i] = drawn_times
             count += len(drawn_times)
             print(self.session_dict[i])
-            # else:
-            #     self.session_dict[i] = [t[-1]] *l
-            #     print(self.session_dict[i])
-            #     count += len(self.session_dict[i])
 
-
-        # print(self.session_dict)
         if count != self.total_trial_num:
             raise Exception('Missing time_bg!')
 
         print(f'length of each block: {block_lengths}')
         # print(f'bg time of each block: {self.block_list}')
         print(f'{self.total_trial_num} trials total')
+
+
 
 
     def start_trial(self):
@@ -320,6 +341,12 @@ class GiveUpTask:
         self.bin_num = 0
         print("starting to bin the cdf")
         self.state = states.IN_WAIT
+        if self.curr_mean_reward_time == 3:
+            self.auditory.set_frequency('l')
+            print("Frequency for 'l' trial type:", self.auditory.audio_f)
+        else:
+            self.auditory.set_frequency('s')
+            print("Frequency for 's' trial type:", self.auditory.audio_f)
         self.auditory.cue_on()
         string = self.get_string_to_log('nan,1,audio')
         self.data_writer.log(string)
@@ -341,9 +368,13 @@ class GiveUpTask:
         starts a session and initiates display to all black
         """
         self.get_session_structure()
+
         if self.auto_delivery:
             self.get_wait_time_optimal()
+        # self.camera.on()
+        time.sleep(20)
         self.session_start_time = time.time()
+
         self.running = True
         string = self.get_string_to_log('nan,1,session')
         self.data_writer.log(string)
@@ -356,6 +387,7 @@ class GiveUpTask:
         # print(f'performance for this session is {self.total_reward_count/self.total_trial_num}%2f')
         string = self.get_string_to_log('nan,0,session')
         self.data_writer.log(string)
+        # self.camera.shutdown()
         global stopped
         if stopped:
             self.data_writer.log(self.get_string_to_log('nan,0,end_via_button'))
@@ -382,8 +414,11 @@ class GiveUpTask:
         self.curr_mean_reward_time = self.curr_block.mean_reward_time
         if self.curr_mean_reward_time == 3:
             self.auditory.set_frequency('l')
+            print("Frequency for 'l' trial type:", self.auditory.audio_f)
         else:
             self.auditory.set_frequency('s')
+            print("Frequency for 's' trial type:", self.auditory.audio_f)
+
         if self.sometimes_not_rewarded:
              self.curr_overall_reward_prob = self.curr_block.overall_reward_prob
         else:
@@ -521,37 +556,37 @@ class GiveUpTask:
         self.data_writer.log(string)
         print('start background time')
 
-class StopButton:
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.geometry("300x200")
-        self.root.title('Google Upload')
-        my_font = font.Font(size=16)
-        self.text = tk.StringVar(value='Stop After Current Upload')
-        self.button = tk.Button(
-            master=self.root,
-            textvariable=self.text,
-            font=my_font,
-            width=40,
-            height=12,
-            bg="white",
-            fg="black",
-            command=self.stop)
-        self.button.pack()
-        self._job = self.root.after(1000, self.check_continue)
-        self.root.mainloop()
-
-    def stop(self):
-        global stop
-        stop = True
-        self.text.set('stopping...')
-
-    def check_continue(self):
-        global stopped
-        if stopped:
-            if self._job is not None:
-                self.root.after_cancel(self._job)
-                self._job = None
-            self.root.destroy()
-        else:
-            self._job = self.root.after(1000, self.check_continue)
+# class StopButton:
+#     def __init__(self):
+#         self.root = tk.Tk()
+#         self.root.geometry("300x200")
+#         self.root.title('Google Upload')
+#         my_font = font.Font(size=16)
+#         self.text = tk.StringVar(value='Stop After Current Upload')
+#         self.button = tk.Button(
+#             master=self.root,
+#             textvariable=self.text,
+#             font=my_font,
+#             width=40,
+#             height=12,
+#             bg="white",
+#             fg="black",
+#             command=self.stop)
+#         self.button.pack()
+#         self._job = self.root.after(1000, self.check_continue)
+#         self.root.mainloop()
+#
+#     def stop(self):
+#         global stop
+#         stop = True
+#         self.text.set('stopping...')
+#
+#     def check_continue(self):
+#         global stopped
+#         if stopped:
+#             if self._job is not None:
+#                 self.root.after_cancel(self._job)
+#                 self._job = None
+#             self.root.destroy()
+#         else:
+#             self._job = self.root.after(1000, self.check_continue)

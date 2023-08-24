@@ -3,6 +3,8 @@ import time
 from krave import utils
 # from krave.hardware.auditory import Auditory
 from krave.hardware.auditory import Auditory
+# from krave.hardware.pi_camera import CameraPi
+from krave.hardware.led import LED
 from krave.hardware.spout import Spout
 from krave.hardware.trigger import Trigger
 from krave.output.data_writer import DataWriter
@@ -28,10 +30,10 @@ class PiTest:
         self.spout1 = Spout(self.mouse, self.exp_config, spout_name="1")
         self.spout2 = Spout(self.mouse, self.exp_config, spout_name="2")
 
-        # self.visual = Visual(self.mouse, self.exp_config)
+        self.LED = LED(self.mouse, self.exp_config)
         self.auditory1 = Auditory(self.mouse, self.exp_config, audio_name = "1",trial_type='s')
         self.auditory2 = Auditory(self.mouse, self.exp_config, audio_name = "2",trial_type='l')
-
+        # self.camera = CameraPi()
 
         self.data_writer = DataWriter(self.mouse, self.exp_name, "test",self.exp_config, False)
         self.trigger = Trigger(self.exp_config)
@@ -43,6 +45,12 @@ class PiTest:
     def get_config(self):
         """Get experiment config from json"""
         return utils.get_config('krave.experiment', f'config/{self.exp_name}.json')
+
+    def test_pi_camera_preview(self):
+        self.camera.on()
+        time.sleep(20)
+        self.camera.shutdown()
+        self.end()
 
     def test_lick(self, spout):
         if spout == 1:
@@ -92,6 +100,21 @@ class PiTest:
             pygame.display.update()
         self.visual.shutdown()
         print("TIME IS UP")
+
+    def test_LED(self):
+        time_limit = 30
+        start = time.time()
+        while start + time_limit > time.time():
+
+            self.LED.set_color("l")
+            time.sleep(5)
+            self.LED.cue_on()
+            time.sleep(5)
+            self.LED.set_color("s")
+            time.sleep(5)
+            self.LED.cue_on()
+        self.LED.shutdown()
+
 
     def test_audio(self, auditory):
         if auditory == 1:
