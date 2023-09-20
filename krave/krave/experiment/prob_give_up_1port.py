@@ -11,6 +11,7 @@ from krave.hardware.trigger import Trigger
 from krave.output.data_writer import DataWriter
 from krave.experiment import timescapes
 from krave.experiment import exp_utils
+import socket
 
 # from krave.hardware.pi_camera import CameraPi
 from threading import Thread
@@ -31,19 +32,37 @@ class Block:
 
 class GiveUpTask:
     def __init__(self, mouse, exp_name, training, calibrate=False, record=False, forward = True):
+        hostname = socket.gethostname()
+        # Check if the hostname contains "ziyipi1" or "ziyipi3"
+        if "ziyipi1" in hostname:
+            # Code for Raspberry Pi with hostname "ziyipi1"
+            print("Running on ziyipi1")
+            self.hostname = "ziyipi1"
+        elif "ziyipi3" in hostname:
+            # Code for Raspberry Pi with hostname "ziyipi3"
+            print("Running on ziyipi3")
+            self.hostname = "ziyipi3"
+        else:
+            # Code for other Raspberry Pis or devices
+            print("Running on an unknown device")
 
         self.total_trial_num = None
         self.mouse = mouse
         self.exp_name = exp_name
         self.exp_config = self.get_config()
         self.hardware_name = self.exp_config['hardware_setup']
+        self.animal_assignment = self.exp_config['timescape']
         self.training = training
         self.calibrate = calibrate
         self.record = record
 
         # hardwares
-        self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
-        self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
+        if self.hostname == "ziyipi1":
+            self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
+            self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
+        else:
+            self.spout = Spout(self.mouse, self.exp_config, spout_name="1")
+            self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
         print(self.auditory.audio_f)
         # print(self.spout.water_pin)
         self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.exp_config, forward)
@@ -74,22 +93,36 @@ class GiveUpTask:
                 self.sometimes_not_rewarded = True
         elif self.training.startswith("no"):
             self.have_blocks = False
-            if self.training == 'no_block_shaping_l':
-                self.auto_delivery = True
-                self.sometimes_not_rewarded = False
-                self.curr_mean_reward_time = self.mean_reward_time_l
-                self.curr_overall_reward_prob = self.overall_reward_prob_l
-            elif self.training == "no_block_regular_l":
-                self.auto_delivery = False
-                self.sometimes_not_rewarded = True
-                self.curr_mean_reward_time = self.mean_reward_time_l
-                self.curr_overall_reward_prob = self.overall_reward_prob_l
-            elif self.training == "no_block_regular_s":
-                self.auto_delivery = False
-                self.sometimes_not_rewarded = True
-                self.curr_mean_reward_time = self.mean_reward_time_s
-                self.curr_overall_reward_prob = self.overall_reward_prob_s
+            self.timescape = self.animal_assignment[self.mouse][0]
+            print(self.timescape)
+            if self.timescape == "long":
+                if self.training == 'no_block_shaping':
+                    self.auto_delivery = True
+                    self.sometimes_not_rewarded = False
+                    self.curr_mean_reward_time = self.mean_reward_time_l
+                    self.curr_overall_reward_prob = self.overall_reward_prob_l
+                    self.training = 'no_block_shaping_l'
+                elif self.training == "no_block_regular":
+                    self.auto_delivery = False
+                    self.sometimes_not_rewarded = True
+                    self.curr_mean_reward_time = self.mean_reward_time_l
+                    self.curr_overall_reward_prob = self.overall_reward_prob_l
+                    self.training = 'no_block_regular_l'
+            elif self.timescape == "short":
+                if self.training == "no_block_regular":
+                    self.auto_delivery = False
+                    self.sometimes_not_rewarded = True
+                    self.curr_mean_reward_time = self.mean_reward_time_s
+                    self.curr_overall_reward_prob = self.overall_reward_prob_s
+                    self.training = 'no_block_regular_s'
+                elif self.training == "no_block_shaping":
+                    self.auto_delivery = True
+                    self.sometimes_not_rewarded = False
+                    self.curr_mean_reward_time = self.mean_reward_time_s
+                    self.curr_overall_reward_prob = self.overall_reward_prob_s
+                    self.training = 'no_block_shaping_s'
             else:
+                print(self.training)
                 raise Exception('Training type invalid')
 
         # session structure
@@ -277,7 +310,6 @@ class GiveUpTask:
             self.session_dict[i] = drawn_times
             count += len(drawn_times)
             print(self.session_dict[i])
-
         if count != self.total_trial_num:
             raise Exception('Missing time_bg!')
 

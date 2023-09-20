@@ -17,7 +17,7 @@ if __name__ == '__main__':
     # PiTest("RZ001", "exp1").test_visual_cue()
     # PiTest("ZG002", "exp1").test_audio(1)
     # PiTest("ZG000","exp1").test_pi_camera_preview()
-    # PiTest("ZG014", "exp1").test_water(run_time =100, open_time=0.2, cool_time=0.2, spout =2)
+    # PiTest("ZG014", "exp1").test_water(run_time =10, open_time=0.2, cool_time=0.2, spout =1)
     #    PiTest("ZG001", "exp1").test_two_spouts_with_audio(time_limit = 30)
     # PiTest("RZ002", "exp1").lick_validation(time_limit = 30)
      # PiTest("RZ002", "exp1").test_drawing_bg_time(avg_bg_time=3)
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     #Task("RZ007", "exp1").shaping(1)
     # PiTest("RZ001", "exp1").test_LED()
     #PiTest("RZ001", "exp1").reset()
-    GiveUpTask("ZG020","exp1", "block_regular").run()
+    GiveUpTask("ZG021","exp1", "no_block_regular").run()
 
 
 
