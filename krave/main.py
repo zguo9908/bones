@@ -25,7 +25,7 @@ if __name__ == '__main__':
     #Task("RZ007", "exp1").shaping(1)
     # PiTest("RZ001", "exp1").test_LED()
     #PiTest("RZ001", "exp1").reset()
-    GiveUpTask("ZG021","exp1", "no_block_regular").run()
+    GiveUpTask("ZG020","exp1", "no_block_regular").run()
 
 
 

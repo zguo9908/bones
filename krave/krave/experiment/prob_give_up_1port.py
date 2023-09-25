@@ -93,9 +93,10 @@ class GiveUpTask:
                 self.sometimes_not_rewarded = True
         elif self.training.startswith("no"):
             self.have_blocks = False
-            self.timescape = self.animal_assignment[self.mouse][0]
-            print(self.timescape)
-            if self.timescape == "long":
+            self.default_timescape = self.animal_assignment[self.mouse]["default"][0]
+            self.default_cue = self.animal_assignment[self.mouse]["default"][1]
+            print(self.default_timescape)
+            if self.default_timescape == "long":
                 if self.training == 'no_block_shaping':
                     self.auto_delivery = True
                     self.sometimes_not_rewarded = False
@@ -108,7 +109,7 @@ class GiveUpTask:
                     self.curr_mean_reward_time = self.mean_reward_time_l
                     self.curr_overall_reward_prob = self.overall_reward_prob_l
                     self.training = 'no_block_regular_l'
-            elif self.timescape == "short":
+            elif self.default_timescape == "short":
                 if self.training == "no_block_regular":
                     self.auto_delivery = False
                     self.sometimes_not_rewarded = True
@@ -373,12 +374,15 @@ class GiveUpTask:
         self.bin_num = 0
         print("starting to bin the cdf")
         self.state = states.IN_WAIT
-        if self.curr_mean_reward_time == 3:
-            self.auditory.set_frequency('l')
-            print("Frequency for 'l' trial type:", self.auditory.audio_f)
+        if self.training.startswith("block"):
+            if self.curr_mean_reward_time == 3:
+                self.auditory.set_frequency('l')
+                print("Frequency for 'l' trial type:", self.auditory.audio_f)
+            else:
+                self.auditory.set_frequency('s')
+                print("Frequency for 's' trial type:", self.auditory.audio_f)
         else:
-            self.auditory.set_frequency('s')
-            print("Frequency for 's' trial type:", self.auditory.audio_f)
+            self.auditory.set_frequency(self.default_cue)
         self.auditory.cue_on()
         string = self.get_string_to_log('nan,1,audio')
         self.data_writer.log(string)

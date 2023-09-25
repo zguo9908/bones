@@ -1,9 +1,27 @@
+import socket
 import time
 
 from krave import utils
 # from krave.hardware.auditory import Auditory
 from krave.hardware.auditory import Auditory
-# from krave.hardware.pi_camera import CameraPi
+
+hostname = socket.gethostname()
+# Check if the hostname contains "ziyipi1" or "ziyipi3"
+if "ziyipi1" in hostname:
+    # Code for Raspberry Pi with hostname "ziyipi1"
+    print("Running on ziyipi1")
+    hostname = "ziyipi1"
+    from krave.hardware.pi_camera import CameraPi
+elif "ziyipi3" in hostname:
+    # Code for Raspberry Pi with hostname "ziyipi3"
+    print("Running on ziyipi3")
+    hostname = "ziyipi3"
+    from krave.hardware.libcamera import CameraViewer
+else:
+    # Code for other Raspberry Pis or devices
+    print("Running on an unknown device")
+
+
 from krave.hardware.led import LED
 from krave.hardware.spout import Spout
 from krave.hardware.trigger import Trigger
@@ -33,7 +51,10 @@ class PiTest:
         self.LED = LED(self.mouse, self.exp_config)
         self.auditory1 = Auditory(self.mouse, self.exp_config, audio_name = "1",trial_type='s')
         self.auditory2 = Auditory(self.mouse, self.exp_config, audio_name = "2",trial_type='l')
-        # self.camera = CameraPi()
+        if hostname == "ziyipi3":
+            self.camera = CameraViewer()
+        else:
+            self.camera = CameraPi()
 
         self.data_writer = DataWriter(self.mouse, self.exp_name, "test",self.exp_config, False)
         self.trigger = Trigger(self.exp_config)

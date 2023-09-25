@@ -1,10 +1,10 @@
 # import picamera2
-from picamera import Picamera
+from picamera import PiCamera
 
 
 class CameraPi:
     def __init__(self):
-        self.camera_pi = Picamera()
+        self.camera_pi = PiCamera()
         self.camera_pi.awb_mode = 'shade'
         self.camera_pi.color_effects = (128, 128)
         self.camera_pi.resolution = (512, 600)
