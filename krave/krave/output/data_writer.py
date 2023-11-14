@@ -8,12 +8,15 @@ from shutil import rmtree
 
 
 class DataWriter:
-    def __init__(self, mouse, exp_name, training, exp_config, forward):
+    def __init__(self, mouse, exp_name, training, exp_config, forward, *args):
         self.mouse = mouse
         self.exp_name = exp_name
         self.training = training
         self.exp_config = exp_config
         self.hardware_config_name = self.exp_config['hardware_setup']
+        if len(args) > 0:
+            self.training_stage = args[0][self.mouse][0]
+            print(f'writing to {self.training_stage} folder!')
         self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_config_name]
         self.forward = forward
         self.ip = self.hardware_config['desktop_ip']
@@ -31,7 +34,10 @@ class DataWriter:
         print("path on pi: ", self.data_write_path)
         self.filename = "data_" + self.mouse + "_" + self.datetime + ".txt"
         # self.data_send_path = os.path.join('C:', 'Users', self.user, 'Documents', 'behavior_data')
-        self.data_send_path = os.path.join('D:', 'behavior_data', 'old_params',self.mouse)
+        if len(args) > 0:
+            self.data_send_path = os.path.join('D:', 'behavior_data', 'no_blocks', 'old_params', self.mouse, self.training_stage)
+        else:
+            self.data_send_path = os.path.join('D:', 'behavior_data', 'no_blocks', 'old_params', self.mouse)
         self.f = None
         print(self.data_write_path)
         os.mkdir(self.data_write_path) #somehow this works for ziyi

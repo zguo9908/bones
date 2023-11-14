@@ -1,11 +1,27 @@
 import statistics
 import time
 import random
+import socket
 import math
 import numpy as np
 from krave.experiment import states
 from krave import utils
 from krave.hardware.auditory import Auditory
+hostname = socket.gethostname()
+# Check if the hostname contains "ziyipi1" or "ziyipi3"
+if "ziyipi1" in hostname:
+    # Code for Raspberry Pi with hostname "ziyipi1"
+    hostname = "ziyipi1"
+    print("Running on ziyipi1")
+    from krave.hardware.pi_camera import CameraPi
+elif "ziyipi3" in hostname:
+    # Code for Raspberry Pi with hostname "ziyipi3"
+    hostname = "ziyipi3"
+    print("Running on ziyipi3")
+    from krave.hardware.libcamera import CameraViewer
+else:
+    # Code for other Raspberry Pis or devices
+    print("Running on an unknown device")
 from krave.hardware.spout import Spout
 from krave.hardware.trigger import Trigger
 from krave.output.data_writer import DataWriter
@@ -32,19 +48,8 @@ class Block:
 
 class GiveUpTask:
     def __init__(self, mouse, exp_name, training, calibrate=False, record=False, forward = True):
-        hostname = socket.gethostname()
+        self.hostname = hostname
         # Check if the hostname contains "ziyipi1" or "ziyipi3"
-        if "ziyipi1" in hostname:
-            # Code for Raspberry Pi with hostname "ziyipi1"
-            print("Running on ziyipi1")
-            self.hostname = "ziyipi1"
-        elif "ziyipi3" in hostname:
-            # Code for Raspberry Pi with hostname "ziyipi3"
-            print("Running on ziyipi3")
-            self.hostname = "ziyipi3"
-        else:
-            # Code for other Raspberry Pis or devices
-            print("Running on an unknown device")
 
         self.total_trial_num = None
         self.mouse = mouse
@@ -52,6 +57,7 @@ class GiveUpTask:
         self.exp_config = self.get_config()
         self.hardware_name = self.exp_config['hardware_setup']
         self.animal_assignment = self.exp_config['timescape']
+        self.training_stage = self.exp_config['stage']
         self.training = training
         self.calibrate = calibrate
         self.record = record
@@ -60,12 +66,20 @@ class GiveUpTask:
         if self.hostname == "ziyipi1":
             self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
-        else:
+            # self.camera = CameraPi()
+        elif self.hostname == "ziyipi3":
             self.spout = Spout(self.mouse, self.exp_config, spout_name="1")
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
+            self.camera = CameraViewer()
+        elif self.hostname == "ziyipi5":
+            self.spout = Spout(self.mouse, self.exp_config, spout_name="1")
+            self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
+            # self.camera = CameraViewer()
+        else:
+            raise Warning("not implemented rig")
         print(self.auditory.audio_f)
         # print(self.spout.water_pin)
-        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.exp_config, forward)
+        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.exp_config, forward, self.training_stage)
         # self.camera = CameraPi()
         # self.camera_trigger = CameraTrigger(self.mouse, self.exp_config)
 
@@ -79,7 +93,7 @@ class GiveUpTask:
         self.curr_mean_reward_time = None
         self.curr_overall_reward_prob = None
 
-        self.reward_size = self.exp_config['reward_size']
+        self.reward_size = self.exp_config['reward_size'][self.hostname][0]
         self.step_size = self.exp_config['step_size']
 
         # task type
@@ -93,10 +107,18 @@ class GiveUpTask:
                 self.sometimes_not_rewarded = True
         elif self.training.startswith("no"):
             self.have_blocks = False
-            self.default_timescape = self.animal_assignment[self.mouse]["default"][0]
-            self.default_cue = self.animal_assignment[self.mouse]["default"][1]
-            print(self.default_timescape)
-            if self.default_timescape == "long":
+            print(self.training_stage[self.mouse])
+            if self.training_stage[self.mouse][0] == "default":
+                self.timescape = self.animal_assignment[self.mouse]["default"][0]
+                self.cue = self.animal_assignment[self.mouse]["default"][1]
+            elif self.training_stage[self.mouse][0] == "change":
+                self.timescape = self.animal_assignment[self.mouse]["change"][0]
+                self.cue = self.animal_assignment[self.mouse]["change"][1]
+            else:
+                print(self.training)
+                raise Exception('Training stage invalid')
+            print(self.timescape)
+            if self.timescape == "long":
                 if self.training == 'no_block_shaping':
                     self.auto_delivery = True
                     self.sometimes_not_rewarded = False
@@ -109,7 +131,7 @@ class GiveUpTask:
                     self.curr_mean_reward_time = self.mean_reward_time_l
                     self.curr_overall_reward_prob = self.overall_reward_prob_l
                     self.training = 'no_block_regular_l'
-            elif self.default_timescape == "short":
+            elif self.timescape == "short":
                 if self.training == "no_block_regular":
                     self.auto_delivery = False
                     self.sometimes_not_rewarded = True
@@ -146,7 +168,7 @@ class GiveUpTask:
         self.time_bg_range = self.exp_config['time_bg_range']
         self.consumption_time = self.exp_config['consumption_time']
         self.punishment_time = self.exp_config['punishment_time']
-        self.max_wait_time = self.exp_config['max_wait_time']
+        self.max_wait_time= self.exp_config['max_wait_time']
 
 
         self.time_array = np.round(np.arange(0, self.max_wait_time, self.step_size),
@@ -382,7 +404,7 @@ class GiveUpTask:
                 self.auditory.set_frequency('s')
                 print("Frequency for 's' trial type:", self.auditory.audio_f)
         else:
-            self.auditory.set_frequency(self.default_cue)
+            self.auditory.set_frequency(self.cue)
         self.auditory.cue_on()
         string = self.get_string_to_log('nan,1,audio')
         self.data_writer.log(string)
@@ -404,10 +426,11 @@ class GiveUpTask:
         starts a session and initiates display to all black
         """
         self.get_session_structure()
-
+        # self.camera.on()
         if self.auto_delivery:
             self.get_wait_time_optimal()
-        # self.camera.on()
+        if self.hostname == "ziyipi3":
+           self.camera.on()
         time.sleep(20)
         self.session_start_time = time.time()
 
@@ -423,13 +446,14 @@ class GiveUpTask:
         # print(f'performance for this session is {self.total_reward_count/self.total_trial_num}%2f')
         string = self.get_string_to_log('nan,0,session')
         self.data_writer.log(string)
-        # self.camera.shutdown()
+        if self.hostname == "ziyipi3":
+            self.camera.shutdown()
         global stopped
         if stopped:
             self.data_writer.log(self.get_string_to_log('nan,0,end_via_button'))
         else:
             self.data_writer.log(self.get_string_to_log('nan,0,ran_to_end'))
-
+      #  self.camera.shutdown()
         self.auditory.shutdown()
         # self.spout.shutdown()
         self.data_writer.end()

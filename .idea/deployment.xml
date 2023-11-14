@@ -10,38 +10,17 @@
           </mappings>
         </serverdata>
       </paths>
-      <paths name="pi@ziyipi1:22 password (1)">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/home/pi/behavior" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="pi@ziyipi2:22 password">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/home/pi/behavior" local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="pi@ziyipi2:22 password (1)">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/home/pi/behavior" local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="pi@ziyipi2:22 password (2)">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/home/pi/behavior" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
       <paths name="pi@ziyipi3:22 password">
         <serverdata>
           <mappings>
             <mapping deploy="/home/pi/behavior3" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@ziyipi5:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/pi/behavior5" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
