@@ -66,7 +66,7 @@ class GiveUpTask:
         if self.hostname == "ziyipi1":
             self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
-            # self.camera = CameraPi()
+            self.camera = CameraPi()
         elif self.hostname == "ziyipi3":
             self.spout = Spout(self.mouse, self.exp_config, spout_name="1")
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')

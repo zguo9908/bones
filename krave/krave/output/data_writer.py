@@ -45,6 +45,13 @@ class DataWriter:
         print("cwd: ", os.getcwd())
 
         os.chdir(self.data_write_path)
+
+        self.meta = {'mouse': mouse,
+                     'date': self.date,
+                     'time': self.time,
+                     'exp': exp_name,
+                     'training': training}
+
         # shutil.copy(self.exp_config, self.data_write_path)
         os.system('sudo touch ' + self.filename)  # make the file for writing the data
         os.system('sudo chmod o+w ' + self.filename)  # add permission to write in the data file

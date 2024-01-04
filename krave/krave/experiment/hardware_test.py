@@ -11,7 +11,7 @@ if "ziyipi1" in hostname:
     # Code for Raspberry Pi with hostname "ziyipi1"
     print("Running on ziyipi1")
     hostname = "ziyipi1"
-   # from krave.hardware.pi_camera import CameraPi
+    from krave.hardware.pi_camera import CameraPi
 elif "ziyipi3" in hostname:
     # Code for Raspberry Pi with hostname "ziyipi3"
     print("Running on ziyipi3")
@@ -57,6 +57,8 @@ class PiTest:
         self.auditory2 = Auditory(self.mouse, self.exp_config, audio_name = "2",trial_type='l')
         if hostname == "ziyipi3":
             self.camera = CameraViewer()
+        elif hostname == "ziyipi1":
+            self.camera = CameraPi()
 
         self.data_writer = DataWriter(self.mouse, self.exp_name, "test",self.exp_config, False)
         self.trigger = Trigger(self.exp_config)
@@ -73,7 +75,7 @@ class PiTest:
         self.camera.on()
         time.sleep(20)
         self.camera.shutdown()
-        self.end()
+        # self.end()
 
     def test_lick(self, spout):
         if spout == 1:
