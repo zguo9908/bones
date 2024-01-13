@@ -1,3 +1,4 @@
+import json
 import shutil
 import time
 import os
@@ -24,7 +25,8 @@ class DataWriter:
         print(self.user)
         self.password = self.hardware_config['password']
         self.pi_user_name = self.hardware_config['pi_user_name']
-
+        self.date = time.strftime("%Y-%m-%d")
+        self.time = time.strftime("%H-%M-%S")
         self.datetime = time.strftime("%Y-%m-%d_%H-%M-%S")
         # self.date = time.strf("%Y-%m-%dS")
         self.folder_name = self.mouse + '_' + self.datetime + '_' + self.training
@@ -104,8 +106,15 @@ class DataWriter:
         new_line = str(session_time) + ',' + string + '\n'
         self.f.write(new_line)
 
-    def end(self):
+    def update_meta(self, session_data):
+        self.meta = self.meta | session_data
+        meta_path = os.path.join(self.data_write_path, "meta_" + self.mouse + "_" + self.datetime  + ".json")
+        with open(meta_path, 'w') as json_file:
+            json.dump(self.meta, json_file, indent=4)
+
+    def end(self,session_data=None):
         self.f.close()
+        self.update_meta(session_data)
         if self.forward:
             os.chdir('..')
             os.chdir('..')

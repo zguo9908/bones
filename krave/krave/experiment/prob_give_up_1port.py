@@ -456,7 +456,12 @@ class GiveUpTask:
       #  self.camera.shutdown()
         self.auditory.shutdown()
         # self.spout.shutdown()
-        self.data_writer.end()
+        session_data = {
+            'total_trial': self.session_trial_num,
+            'total_reward': self.total_reward_count,
+        }
+        print(session_data)
+        self.data_writer.end(session_data)
 
     def start_block(self):
         """
@@ -596,7 +601,6 @@ class GiveUpTask:
         if not self.running:
             self.end()
 
-#no longer using punishments
 
     def start_punishment(self):
         """starts punishment time, logs using data writer, trial does not restart"""
@@ -616,6 +620,10 @@ class GiveUpTask:
         self.data_writer.log(string)
         print('start background time')
 
+
+
+
+#-----------------------unfinished work for GUI with stop task button--------------------------------------#
 # class StopButton:
 #     def __init__(self):
 #         self.root = tk.Tk()
