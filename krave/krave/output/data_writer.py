@@ -9,7 +9,7 @@ from shutil import rmtree
 
 
 class DataWriter:
-    def __init__(self, mouse, exp_name, training, exp_config, forward, *args):
+    def __init__(self, mouse, exp_name, training, param, exp_config, forward, *args):
         self.mouse = mouse
         self.exp_name = exp_name
         self.training = training
@@ -37,9 +37,9 @@ class DataWriter:
         self.filename = "data_" + self.mouse + "_" + self.datetime + ".txt"
         # self.data_send_path = os.path.join('C:', 'Users', self.user, 'Documents', 'behavior_data')
         if len(args) > 0:
-            self.data_send_path = os.path.join('D:', 'behavior_data', 'no_blocks', 'old_params', self.mouse, self.training_stage)
+            self.data_send_path = os.path.join('D:', 'behavior_data', 'no_blocks', param, self.mouse, self.training_stage)
         else:
-            self.data_send_path = os.path.join('D:', 'behavior_data', 'no_blocks', 'old_params', self.mouse)
+            self.data_send_path = os.path.join('D:', 'behavior_data', 'no_blocks', param, self.mouse)
         self.f = None
         print(self.data_write_path)
         os.mkdir(self.data_write_path) #somehow this works for ziyi

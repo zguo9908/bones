@@ -60,7 +60,7 @@ class PiTest:
         elif hostname == "ziyipi1":
             self.camera = CameraPi()
 
-        self.data_writer = DataWriter(self.mouse, self.exp_name, "test",self.exp_config, False)
+        self.data_writer = DataWriter(self.mouse, self.exp_name, "test", "test",self.exp_config, False)
         self.trigger = Trigger(self.exp_config)
 
         self.running = False
@@ -194,7 +194,7 @@ class PiTest:
 
     def test_trigger(self, time_limit=200):
         """tests square wave"""
-        data_writer = DataWriter("test", self.exp_name, self.exp_config, forward_file=False)
+        data_writer = DataWriter("test", self.exp_name, "test", self.exp_config, forward_file=False)
         while self.start_time + time_limit > time.time():
             self.trigger.square_wave(data_writer)
         self.end()

@@ -7,6 +7,9 @@ from krave.experiment.prob_give_up_1port import GiveUpTask
 #!/usr/bin/env python3
 
 
+#param_v1: s = 1, l = 3
+#param_v2: s = 1.2, l = 3.3
+
 def main(mouse, exp_name, hardware_config_name):
     pass
 
@@ -26,7 +29,7 @@ if __name__ == '__main__':
     #Task("RZ007", "exp1").shaping(1)
     # PiTest("RZ001", "exp1").test_LED()
     #PiTest("RZ001", "exp1").reset()
-    GiveUpTask("ZG020","exp1", "no_block_regular").run()
+    GiveUpTask("ZG020","exp1", "no_block_shaping", "param_v2").run()
 
 
 

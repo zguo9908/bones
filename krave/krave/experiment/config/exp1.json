@@ -11,7 +11,7 @@
   "max_missed_trial": 10,
   "shuffle_blocks": true,
   "auto_end": true,
-  "exp_blocks": {"s": [1,0.9,2], "l": [3,0.9,2]},
+  "exp_blocks": {"s": [1.2,0.9,2], "l": [3.3,0.9,2]},
   "auditory_cue_frequency": {"s":[1000],"l": [9000]},
   "led_cue": {"s":["blue"],"l": ["green"]},
   "auditory_display_duration": 0.5,

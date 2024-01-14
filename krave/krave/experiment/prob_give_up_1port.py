@@ -47,7 +47,7 @@ class Block:
 
 
 class GiveUpTask:
-    def __init__(self, mouse, exp_name, training, calibrate=False, record=False, forward = True):
+    def __init__(self, mouse, exp_name, training, param, calibrate=False, record=False, forward = True):
         self.hostname = hostname
         # Check if the hostname contains "ziyipi1" or "ziyipi3"
 
@@ -59,6 +59,7 @@ class GiveUpTask:
         self.animal_assignment = self.exp_config['timescape']
         self.training_stage = self.exp_config['stage']
         self.training = training
+        self.param = param
         self.calibrate = calibrate
         self.record = record
 
@@ -79,7 +80,7 @@ class GiveUpTask:
             raise Warning("not implemented rig")
         print(self.auditory.audio_f)
         # print(self.spout.water_pin)
-        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.exp_config, forward, self.training_stage)
+        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param, self.exp_config, forward, self.training_stage)
         # self.camera = CameraPi()
         # self.camera_trigger = CameraTrigger(self.mouse, self.exp_config)
 
