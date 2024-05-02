@@ -28,6 +28,7 @@ else:
 
 from krave.hardware.led import LED
 from krave.hardware.spout import Spout
+from krave.hardware.spout_ir import Spout_IR
 from krave.hardware.trigger import Trigger
 from krave.output.data_writer import DataWriter
 import numpy as np
@@ -51,14 +52,15 @@ class PiTest:
 
         self.spout1 = Spout(self.mouse, self.exp_config, spout_name="1")
         self.spout2 = Spout(self.mouse, self.exp_config, spout_name="2")
+        self.ir_spout = Spout_IR(self.mouse, self.exp_config, spout_name="1")
 
-        self.LED = LED(self.mouse, self.exp_config)
+        # self.LED = LED(self.mouse, self.exp_config)
         self.auditory1 = Auditory(self.mouse, self.exp_config, audio_name = "1",trial_type='s')
         self.auditory2 = Auditory(self.mouse, self.exp_config, audio_name = "2",trial_type='l')
         if hostname == "ziyipi3":
-            self.camera = CameraViewer()
+            self.camera = CameraViewer('test_video.h264')
         elif hostname == "ziyipi1":
-            self.camera = CameraPi()
+            self.camera = CameraPi('test_video.h264')
 
         self.data_writer = DataWriter(self.mouse, self.exp_name, "test", "test",self.exp_config, False)
         self.trigger = Trigger(self.exp_config)
@@ -72,7 +74,7 @@ class PiTest:
         return utils.get_config('krave.experiment', f'config/{self.exp_name}.json')
 
     def test_pi_camera_preview(self):
-        self.camera.on()
+        self.camera.on(record_video=True)
         time.sleep(20)
         self.camera.shutdown()
         # self.end()
@@ -101,6 +103,63 @@ class PiTest:
         finally:
             testing_spout.shutdown()
 
+    def test_lick_ir(self):
+        print(f'lick pin is {self.ir_spout.ir_lick_pin}')
+        print(f'water pin is {self.ir_spout.water_pin}')
+
+        try:
+            time_limit = 60
+            start = time.time()
+            lick_counter = 0
+            while start + time_limit > time.time():
+                lick_change = self.ir_spout.lick_status_check()
+                if lick_change == 1:
+                    print(f"start lick {lick_counter} at {time.time()}")
+                    lick_counter += 1
+                elif lick_change == -1:
+                    print(f"end lick {lick_counter} at {time.time()}")
+        finally:
+            self.ir_spout.shutdown()
+
+    def test_two_lick_detections(self):
+        # will be testing this on rig 3
+        print(f'lick pin for ir spout is {self.ir_spout.ir_lick_pin}')
+        print(f'lick pin for capacitivate spout is {self.spout1.lick_pin}')
+        print(f'water pin is {self.ir_spout.water_pin}')
+
+        try:
+            time_limit = 60
+            start = time.time()
+            ir_lick_counter = 0
+            cap_lick_counter = 0
+            ir_lick_start_time = []
+            cap_lick_start_time = []
+
+            ir_lick_end_time = []
+            cap_lick_end_time = []
+            while start + time_limit > time.time():
+                ir_lick_change = self.ir_spout.lick_status_check()
+                cap_lick_change = self.spout1.lick_status_check()
+                if ir_lick_change == 1:
+                    print(f"ir start lick {ir_lick_counter} at {time.time()}")
+                    ir_lick_counter += 1
+                    ir_lick_start_time.append(time.time())
+                elif ir_lick_change == -1:
+                    print(f"end lick {ir_lick_counter} at {time.time()}")
+                    ir_lick_end_time.append(time.time())
+                elif cap_lick_change == 1:
+                    print(f"cap start lick {cap_lick_counter} at {time.time()}")
+                    cap_lick_counter += 1
+                    cap_lick_start_time.append(time.time())
+                elif cap_lick_change == -1:
+                    print(f"end lick {cap_lick_counter} at {time.time()}")
+                    cap_lick_end_time.append(time.time())
+        finally:
+            print(f'start time difference of two spouts {ir_lick_start_time - cap_lick_start_time}')
+            print(f'end time difference of two spouts {ir_lick_end_time - cap_lick_end_time}')
+
+            self.ir_spout.shutdown()
+
     def test_visual_cue(self):
         start = time.time()
         time_limit = 20
@@ -126,19 +185,20 @@ class PiTest:
         self.visual.shutdown()
         print("TIME IS UP")
 
-    def test_LED(self):
-        time_limit = 30
-        start = time.time()
-        while start + time_limit > time.time():
-
-            self.LED.set_color("l")
-            time.sleep(5)
-            self.LED.cue_on()
-            time.sleep(5)
-            self.LED.set_color("s")
-            time.sleep(5)
-            self.LED.cue_on()
-        self.LED.shutdown()
+#-------------deprecated LED function------------------need other pins
+    # def test_LED(self):
+    #     time_limit = 30
+    #     start = time.time()
+    #     while start + time_limit > time.time():
+    #
+    #         self.LED.set_color("l")
+    #         time.sleep(5)
+    #         self.LED.cue_on()
+    #         time.sleep(5)
+    #         self.LED.set_color("s")
+    #         time.sleep(5)
+    #         self.LED.cue_on()
+    #     self.LED.shutdown()
 
 
     def test_audio(self, auditory):

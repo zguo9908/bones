@@ -7,6 +7,8 @@ import numpy as np
 from krave.experiment import states
 from krave import utils
 from krave.hardware.auditory import Auditory
+from krave.hardware.spout_ir import Spout_IR
+
 hostname = socket.gethostname()
 # Check if the hostname contains "ziyipi1" or "ziyipi3"
 if "ziyipi1" in hostname:
@@ -64,23 +66,24 @@ class GiveUpTask:
         self.record = record
 
         # hardwares
+        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param, self.exp_config, forward, self.training_stage)
+
         if self.hostname == "ziyipi1":
             self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
-            self.camera = CameraPi()
+            self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         elif self.hostname == "ziyipi3":
             self.spout = Spout(self.mouse, self.exp_config, spout_name="1")
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
-            self.camera = CameraViewer()
+            self.camera = CameraViewer(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         elif self.hostname == "ziyipi5":
-            self.spout = Spout(self.mouse, self.exp_config, spout_name="1")
+            self.spout = Spout_IR(self.mouse, self.exp_config)
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
             # self.camera = CameraViewer()
         else:
             raise Warning("not implemented rig")
         print(self.auditory.audio_f)
         # print(self.spout.water_pin)
-        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param, self.exp_config, forward, self.training_stage)
         # self.camera = CameraPi()
         # self.camera_trigger = CameraTrigger(self.mouse, self.exp_config)
 
@@ -134,7 +137,7 @@ class GiveUpTask:
                     self.training = 'no_block_regular_l'
             elif self.timescape == "short":
                 if self.training == "no_block_regular":
-                    self.auto_delivery = False
+                    self .auto_delivery = False
                     self.sometimes_not_rewarded = True
                     self.curr_mean_reward_time = self.mean_reward_time_s
                     self.curr_overall_reward_prob = self.overall_reward_prob_s
@@ -430,8 +433,8 @@ class GiveUpTask:
         # self.camera.on()
         if self.auto_delivery:
             self.get_wait_time_optimal()
-        if self.hostname == "ziyipi3":
-           self.camera.on()
+       # if self.hostname == "ziyipi3":
+        self.camera.on(record_video = False)
         time.sleep(20)
         self.session_start_time = time.time()
 
@@ -447,8 +450,8 @@ class GiveUpTask:
         # print(f'performance for this session is {self.total_reward_count/self.total_trial_num}%2f')
         string = self.get_string_to_log('nan,0,session')
         self.data_writer.log(string)
-        if self.hostname == "ziyipi3":
-            self.camera.shutdown()
+        #if self.hostname == "ziyipi3":
+        self.camera.shutdown()
         global stopped
         if stopped:
             self.data_writer.log(self.get_string_to_log('nan,0,end_via_button'))
