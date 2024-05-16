@@ -4,6 +4,7 @@ import time
 from krave import utils
 # from krave.hardware.auditory import Auditory
 from krave.hardware.auditory import Auditory
+from krave.hardware.basler_camera import CameraBasler
 
 hostname = socket.gethostname()
 # Check if the hostname contains "ziyipi1" or "ziyipi3"
@@ -21,6 +22,7 @@ elif "ziyipi5" in hostname:
     # Code for Raspberry Pi with hostname "ziyipi3"
     print("Running on ziyipi5")
     hostname = "ziyipi5"
+    from krave.hardware.pi_camera import CameraPi
 else:
     # Code for other Raspberry Pis or devices
     print("Running on an unknown device")
@@ -29,7 +31,6 @@ else:
 from krave.hardware.led import LED
 from krave.hardware.spout import Spout
 from krave.hardware.spout_ir import Spout_IR
-from krave.hardware.trigger import Trigger
 from krave.output.data_writer import DataWriter
 import numpy as np
 import numpy.core.multiarray
@@ -48,25 +49,31 @@ class PiTest:
         self.exp_name = exp_name
         self.exp_config = self.get_config()
         self.hardware_name = self.exp_config['hardware_setup']
+        self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_name]
+
         self.cue_duration = self.exp_config["auditory_display_duration"]
 
-        self.spout1 = Spout(self.mouse, self.exp_config, spout_name="1")
-        self.spout2 = Spout(self.mouse, self.exp_config, spout_name="2")
-        self.ir_spout = Spout_IR(self.mouse, self.exp_config, spout_name="1")
+        self.spout1 = Spout(self.mouse, self.hardware_config, spout_name="1")
+        self.spout2 = Spout(self.mouse, self.hardware_config, spout_name="2")
+        # self.ir_spout = Spout_IR(self.mouse, self.hardware_config, spout_name="1")
 
         # self.LED = LED(self.mouse, self.exp_config)
-        self.auditory1 = Auditory(self.mouse, self.exp_config, audio_name = "1",trial_type='s')
-        self.auditory2 = Auditory(self.mouse, self.exp_config, audio_name = "2",trial_type='l')
+        self.auditory1 = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name = "1",trial_type='s')
+        self.auditory2 = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name = "2",trial_type='l')
+        self.data_writer = DataWriter(self.mouse, self.exp_name, "test", "test",self.exp_config, False)
+
         if hostname == "ziyipi3":
             self.camera = CameraViewer('test_video.h264')
         elif hostname == "ziyipi1":
             self.camera = CameraPi('test_video.h264')
-
-        self.data_writer = DataWriter(self.mouse, self.exp_name, "test", "test",self.exp_config, False)
-        self.trigger = Trigger(self.exp_config)
+        elif hostname == "ziyipi5":
+            self.camera = CameraPi('test_video.h264')
+            self.trigger = CameraBasler(self.hardware_config, self.data_writer)
 
         self.running = False
         self.testing_auditory = None
+        self.start_time = time.time()
+        self.status = 'nan,nan,nan,nan,nan,'
 
 
     def get_config(self):
@@ -210,6 +217,7 @@ class PiTest:
             print("no more than 2 auditory ports assembled")
         time_limit = 30
         start = time.time()
+        pygame.init()
         while start + time_limit > time.time():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -254,9 +262,8 @@ class PiTest:
 
     def test_trigger(self, time_limit=200):
         """tests square wave"""
-        data_writer = DataWriter("test", self.exp_name, "test", self.exp_config, forward_file=False)
         while self.start_time + time_limit > time.time():
-            self.trigger.square_wave(data_writer)
+            self.trigger.square_wave(self.status)
         self.end()
 
     def test_two_spouts_with_audio(self, time_limit):

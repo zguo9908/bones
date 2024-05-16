@@ -10,7 +10,6 @@ from krave.hardware.auditory import Auditory
 from krave.hardware.spout_ir import Spout_IR
 
 hostname = socket.gethostname()
-# Check if the hostname contains "ziyipi1" or "ziyipi3"
 if "ziyipi1" in hostname:
     # Code for Raspberry Pi with hostname "ziyipi1"
     hostname = "ziyipi1"
@@ -25,7 +24,7 @@ else:
     # Code for other Raspberry Pis or devices
     print("Running on an unknown device")
 from krave.hardware.spout import Spout
-from krave.hardware.trigger import Trigger
+from krave.hardware.basler_camera import CameraBasler
 from krave.output.data_writer import DataWriter
 from krave.experiment import timescapes
 from krave.experiment import exp_utils
@@ -51,7 +50,6 @@ class Block:
 class GiveUpTask:
     def __init__(self, mouse, exp_name, training, param, calibrate=False, record=False, forward = True):
         self.hostname = hostname
-        # Check if the hostname contains "ziyipi1" or "ziyipi3"
 
         self.total_trial_num = None
         self.mouse = mouse
@@ -79,7 +77,8 @@ class GiveUpTask:
         elif self.hostname == "ziyipi5":
             self.spout = Spout_IR(self.mouse, self.exp_config)
             self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
-            # self.camera = CameraViewer()
+            self.trigger = CameraBasler(self.hardware_config, self.data_writer)
+            self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         else:
             raise Warning("not implemented rig")
         print(self.auditory.audio_f)
@@ -450,7 +449,8 @@ class GiveUpTask:
         # print(f'performance for this session is {self.total_reward_count/self.total_trial_num}%2f')
         string = self.get_string_to_log('nan,0,session')
         self.data_writer.log(string)
-        #if self.hostname == "ziyipi3":
+        if self.hostname == "ziyipi5":
+            self.trigger.shutdown()
         self.camera.shutdown()
         global stopped
         if stopped:
@@ -546,7 +546,7 @@ class GiveUpTask:
             self.spout.water_cleanup()
             self.auditory.cue_cleanup()
             if self.record:
-                self.camera_trigger.square_wave(self.data_writer)
+                self.trigger.square_wave(self.status())
 
             if self.state == states.IN_WAIT:
                 if (time.time() - self.wait_start_time) // self.step_size > self.bin_num:

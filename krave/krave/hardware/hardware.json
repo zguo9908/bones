@@ -11,17 +11,13 @@
     "ir_spout": {
       "1": [5,6]
     },
-    "led": {
-      "green": [6],
-      "blue": [5]
-    },
     "audio": {
       "1": [22],
       "2": [25]
     },
     "camera": 6,
-    "NI_box": 25,
-    "frequency": 50,
+    "camera_to_box": 25,
+    "camera_frequency": 50,
     "exposure_time": 1200
   }
 }

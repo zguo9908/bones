@@ -13,7 +13,8 @@ class Visual_tk():
         self.mouse = mouse
         self.exp_config = exp_config
         self.hardware_config_name = self.exp_config['hardware_setup']
-        self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_config_name]
+        self.hardware_config = utils.get_config('krave.hardware',
+                                                '../hardware/hardware.json')[self.hardware_config_name]
 
         self.cue_name = self.exp_config['visual_cue_name']
         self.cue_path = utils.get_path('krave.hardware', f'visual_cue_img/{self.cue_name}')

@@ -7,13 +7,12 @@ import time
 
 class Auditory:
 
-    def __init__(self, mouse, exp_config, audio_name, trial_type):
+    def __init__(self, mouse, exp_config, hardware_config, audio_name, trial_type):
         self.mouse = mouse
-        self.exp_config = exp_config
         self.trial_type = trial_type
-        self.hardware_config_name = self.exp_config['hardware_setup']
         print(f'creating audio cue for trial type {trial_type}')
-        self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_config_name]
+        self.hardware_config = hardware_config
+        self.exp_config = exp_config
         self.audio_pin = self.hardware_config['audio'][audio_name][0]
         # print(self.audio_pin)
         self.audio_f = self.exp_config['auditory_cue_frequency'][trial_type][0]

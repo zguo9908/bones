@@ -8,7 +8,6 @@ from krave import utils
 from krave.hardware.auditory import Auditory
 from krave.hardware.spout import Spout
 from krave.hardware.visual import Visual
-from krave.hardware.trigger import Trigger
 from krave.output.data_writer import DataWriter
 import pygame
 

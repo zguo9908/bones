@@ -1,21 +1,19 @@
 import time
-
+import numpy as np
+from scipy.signal import butter, lfilter, find_peaks
 from krave import utils
 import RPi.GPIO as GPIO
-import numpy as np
-# import sklearn
 from sklearn.linear_model import LinearRegression
 
-
 class Spout:
-    def __init__(self, mouse, hardware_config, spout_name):
+    def __init__(self, mouse, exp_config, spout_name):
         self.mouse = mouse
+        self.exp_config = exp_config
+        self.hardware_config_name = self.exp_config['hardware_setup']
+        self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_config_name]
 
-        self.hardware_config = hardware_config
         self.lick_pin = self.hardware_config['spouts'][spout_name][0]
         self.water_pin = self.hardware_config['spouts'][spout_name][1]
-        # print(self.lick_pin)
-        # print(self.water_pin)
         self.test_opening_times = [0.01, 0.03, 0.05, 0.08, 0.1, 0.15]
 
         self.lick_status = 0
@@ -24,21 +22,52 @@ class Spout:
         self.water_opened_time = None
         self.water_dispensing = False
 
+        # Lick detection parameters
+        self.sample_rate = 1000  # Replace with your desired sample rate
+        self.filter_order = 2
+        self.cutoff_freq = 20  # Replace with desired cutoff frequency
+        self.threshold = 0.5  # Replace with desired threshold voltage
+        self.min_lick_duration = 0.1  # Replace with desired minimum lick duration (in seconds)
+
+        # Set up GPIO
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.lick_pin, GPIO.IN)
         GPIO.setup(self.water_pin, GPIO.OUT)
         GPIO.output(self.water_pin, GPIO.LOW)
+
+        # Initialize lick detection filter
+        nyquist_freq = 0.5 * self.sample_rate
+        normal_cutoff = self.cutoff_freq / nyquist_freq
+        self.b, self.a = butter(self.filter_order, normal_cutoff, btype='low', analog=False)
 
     def lick_status_check(self):
         """register change only when current status is different than all three
         previous status"""
         self.lick_record = np.roll(self.lick_record, 1)
         self.lick_record[0] = GPIO.input(self.lick_pin)
-        # print(self.lick_record[0])
         change_bool = np.all(self.lick_record != self.lick_status)
         change = 0 if not change_bool else 1 if self.lick_status == 0 else -1
         self.lick_status += change
         return change
+
+    def detect_licks(self):
+        """Detect lick events and print their timestamps"""
+        voltage = self.read_analog_input()
+        filtered_voltage = lfilter(self.b, self.a, [voltage])
+
+        # Detect peaks above threshold
+        peaks, _ = find_peaks(filtered_voltage, height=self.threshold)
+
+        # Process detected peaks and find lick times
+        for peak_idx in peaks:
+            lick_time = peak_idx / self.sample_rate
+            print(f"Lick detected at {lick_time} seconds")
+
+    def read_analog_input(self):
+        """Read analog input from the piezo sensor (replace with your implementation)"""
+        # Implement the logic to read the analog input from the piezo sensor
+        # and return the voltage value
+        return 0.0  # Replace with the actual voltage value
 
     def water_on(self, open_time):
         """turn on water, return time turned on"""
@@ -49,9 +78,6 @@ class Spout:
 
     def water_off(self):
         """turn off water, and return time turned off"""
-        # print(self.water_pin)
-        # GPIO.setmode(GPIO.BCM)
-        # GPIO.setup(self.water_pin, GPIO.OUT)
         GPIO.output(self.water_pin, GPIO.LOW)
         self.water_dispensing = False
 
