@@ -1,19 +1,17 @@
 import time
 import numpy as np
+import spidev
 from scipy.signal import butter, lfilter, find_peaks
 from krave import utils
 import RPi.GPIO as GPIO
 from sklearn.linear_model import LinearRegression
 
-class Spout:
-    def __init__(self, mouse, exp_config, spout_name):
+class SpoutPiezo:
+    def __init__(self, mouse, hardware_config, spout_name):
         self.mouse = mouse
-        self.exp_config = exp_config
-        self.hardware_config_name = self.exp_config['hardware_setup']
-        self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_config_name]
-
-        self.lick_pin = self.hardware_config['spouts'][spout_name][0]
-        self.water_pin = self.hardware_config['spouts'][spout_name][1]
+        self.hardware_config = hardware_config
+        self.lick_pin = self.hardware_config['recording_spout'][spout_name][0]
+        self.water_pin = self.hardware_config['recording_spout'][spout_name][1]
         self.test_opening_times = [0.01, 0.03, 0.05, 0.08, 0.1, 0.15]
 
         self.lick_status = 0
@@ -26,7 +24,7 @@ class Spout:
         self.sample_rate = 1000  # Replace with your desired sample rate
         self.filter_order = 2
         self.cutoff_freq = 20  # Replace with desired cutoff frequency
-        self.threshold = 0.5  # Replace with desired threshold voltage
+        self.threshold = 0.1  # Replace with desired threshold voltage
         self.min_lick_duration = 0.1  # Replace with desired minimum lick duration (in seconds)
 
         # Set up GPIO
@@ -35,24 +33,41 @@ class Spout:
         GPIO.setup(self.water_pin, GPIO.OUT)
         GPIO.output(self.water_pin, GPIO.LOW)
 
+        self.spi = spidev.SpiDev()
+        self.channel = 0
+        self.spi.open(0, 0)  # Use SPI bus 0, device 0
+        self.spi.max_speed_hz = 250000  # Set SPI clock speed to 500kHz
+
         # Initialize lick detection filter
         nyquist_freq = 0.5 * self.sample_rate
         normal_cutoff = self.cutoff_freq / nyquist_freq
-        self.b, self.a = butter(self.filter_order, normal_cutoff, btype='low', analog=False)
+        self.b, self.a = butter(self.filter_order, normal_cutoff, btype='high', analog=False)
+
+    # def lick_status_check(self):
+    #     """register change only when current status is different than all three
+    #     previous status"""
+    #     self.lick_record = np.roll(self.lick_record, 1)
+    #     self.lick_record[0] = GPIO.input(self.lick_pin)
+    #     change_bool = np.all(self.lick_record != self.lick_status)
+    #     change = 0 if not change_bool else 1 if self.lick_status == 0 else -1
+    #     self.lick_status += change
+    #     return change
+
+    # def lick_status_check(self):
+    #     """Register change only when the current analog reading is different from the previous status"""
+    #     analog_reading = self.read_analog_input(self.channel)
+    #     lick_threshold = 0.5  # Adjust this threshold based on your specific setup
+    #
+    #     current_status = 1 if analog_reading > lick_threshold else 0
+    #     change = current_status - self.lick_status
+    #     self.lick_status = current_status
+    #     return change
 
     def lick_status_check(self):
-        """register change only when current status is different than all three
-        previous status"""
-        self.lick_record = np.roll(self.lick_record, 1)
-        self.lick_record[0] = GPIO.input(self.lick_pin)
-        change_bool = np.all(self.lick_record != self.lick_status)
-        change = 0 if not change_bool else 1 if self.lick_status == 0 else -1
-        self.lick_status += change
-        return change
-
-    def detect_licks(self):
         """Detect lick events and print their timestamps"""
-        voltage = self.read_analog_input()
+        voltage = self.read_analog_input(self.channel)
+        if voltage > 0:
+            print(f'current voltage: {voltage}')
         filtered_voltage = lfilter(self.b, self.a, [voltage])
 
         # Detect peaks above threshold
@@ -63,11 +78,12 @@ class Spout:
             lick_time = peak_idx / self.sample_rate
             print(f"Lick detected at {lick_time} seconds")
 
-    def read_analog_input(self):
-        """Read analog input from the piezo sensor (replace with your implementation)"""
-        # Implement the logic to read the analog input from the piezo sensor
-        # and return the voltage value
-        return 0.0  # Replace with the actual voltage value
+    def read_analog_input(self, channel):
+        adc = self.spi.xfer2([1, (8 + channel) << 4, 0])
+        print("Raw ADC value:", adc)  # Print the raw ADC value
+        data = ((adc[1] & 3) << 8) + adc[2]
+        print("Calculated voltage:", data * 3.3 / 1023)  # Print the calculated voltage
+        return data
 
     def water_on(self, open_time):
         """turn on water, return time turned on"""
@@ -97,52 +113,3 @@ class Spout:
         GPIO.cleanup()
         print("GPIO cleaned up")
         return time.time()
-
-    def calibrate(self):
-        iteration = 100
-        for t in self.water_opened_time:
-             print(f'water opening for {self.water_opened_time[t]} s')
-             for _ in range(iteration):
-                    self.water_on()
-                    time.sleep(t)
-                    self.water_off()
-                    time.sleep(0.2)
-             input("Press Enter to continue...")
-
-    def calibrate_old(self):
-        self.total_open_times = []
-        self.water_weights = []
-        try:
-            print('calibrating port')
-            repeats = 1  # repeating the same weight
-            iteration = 100  # number of times opened of solenoid
-            for t in self.calibration_times:
-                for r in range(repeats):
-                    total_open_time = 0
-                    for _ in range(iteration):
-                        self.water_on(t)
-                        time.sleep(t)
-                        total_open_time += t
-                        self.water_off()
-                        time.sleep(0.2)
-                    self.total_open_times.append(total_open_time)
-                    water_weight = input(f'open time {t} iter {r} water weight: ')
-                    self.water_weights.append(float(water_weight))
-                    input("Press Enter to continue...")
-        finally:
-            self.shutdown()
-            print(f'total open times {self.total_open_times}')
-            print(f'water weights {self.water_weights}')
-
-            self.total_open_times = np.asarray(self.total_open_times).reshape(-1, 1)
-            self.water_weights = np.asarray(self.water_weights)
-            model = LinearRegression(fit_intercept=False).fit(self.total_open_times, self.water_weights)
-            self.slope = model.coef_[0]
-            print('slope: ', self.slope)
-            print('REMEMBER TO ENTER TO SPOUT INITIATION!!!')
-
-    def calculate_duration(self, reward_size_ul):
-        weight_g = reward_size_ul * 0.001
-        duration = weight_g / self.slope
-        print('sol_open_time: ', duration)
-        return duration

@@ -8,14 +8,14 @@
       "1": [4,27],
       "2": [23,24]
     },
-    "ir_spout": {
-      "1": [5,6]
+    "recording_spout": {
+      "1": [6,5]
     },
     "audio": {
       "1": [22],
       "2": [25]
     },
-    "camera": 6,
+    "camera": 26,
     "camera_to_box": 25,
     "camera_frequency": 50,
     "exposure_time": 1200

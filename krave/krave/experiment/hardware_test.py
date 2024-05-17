@@ -5,6 +5,7 @@ from krave import utils
 # from krave.hardware.auditory import Auditory
 from krave.hardware.auditory import Auditory
 from krave.hardware.basler_camera import CameraBasler
+from krave.hardware.spout_piezo import SpoutPiezo
 
 hostname = socket.gethostname()
 # Check if the hostname contains "ziyipi1" or "ziyipi3"
@@ -69,6 +70,7 @@ class PiTest:
         elif hostname == "ziyipi5":
             self.camera = CameraPi('test_video.h264')
             self.trigger = CameraBasler(self.hardware_config, self.data_writer)
+            self.recording_spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1")
 
         self.running = False
         self.testing_auditory = None
@@ -110,23 +112,23 @@ class PiTest:
         finally:
             testing_spout.shutdown()
 
-    def test_lick_ir(self):
-        print(f'lick pin is {self.ir_spout.ir_lick_pin}')
-        print(f'water pin is {self.ir_spout.water_pin}')
+    def test_lick_recording(self):
+        print(f'lick pin is {self.recording_spout.lick_pin}')
+        print(f'water pin is {self.recording_spout.water_pin}')
 
         try:
             time_limit = 60
             start = time.time()
             lick_counter = 0
             while start + time_limit > time.time():
-                lick_change = self.ir_spout.lick_status_check()
+                lick_change = self.recording_spout.lick_status_check()
                 if lick_change == 1:
                     print(f"start lick {lick_counter} at {time.time()}")
                     lick_counter += 1
                 elif lick_change == -1:
                     print(f"end lick {lick_counter} at {time.time()}")
         finally:
-            self.ir_spout.shutdown()
+            self.recording_spout.shutdown()
 
     def test_two_lick_detections(self):
         # will be testing this on rig 3

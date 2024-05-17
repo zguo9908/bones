@@ -27,8 +27,8 @@ if __name__ == '__main__':
      # PiTest("RZ002", "exp1").test_drawing_bg_time(avg_bg_time=3)
     #PiTest("RZ001", "exp1").reset()
    # PiTest("ZG000",'exp1').test_two_lick_detections()
-   # PiTest("ZG000",'exp1').test_lick_ir()
-    PiTest("ZG000",'exp1').test_trigger()
+    PiTest("ZG000",'exp1').test_lick_recording()
+    #PiTest("ZG000",'exp1').test_trigger()
    # GiveUpTask("ZG020","exp1", "no_block_shaping", "param_v2").run()
 
 
