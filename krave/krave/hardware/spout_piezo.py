@@ -1,6 +1,9 @@
 import time
 import numpy as np
-import spidev
+import sys
+sys.path.insert(0, '/home/pi/Adafruit_MCP3008')
+import Adafruit_GPIO.SPI as SPI
+import Adafruit_MCP3008
 from scipy.signal import butter, lfilter, find_peaks
 from krave import utils
 import RPi.GPIO as GPIO
@@ -20,70 +23,66 @@ class SpoutPiezo:
         self.water_opened_time = None
         self.water_dispensing = False
 
+        self.lick_active = False
+        self.lick_start_time = None
+        self.lick_end_time = None
+
         # Lick detection parameters
         self.sample_rate = 1000  # Replace with your desired sample rate
         self.filter_order = 2
         self.cutoff_freq = 20  # Replace with desired cutoff frequency
-        self.threshold = 0.1  # Replace with desired threshold voltage
-        self.min_lick_duration = 0.1  # Replace with desired minimum lick duration (in seconds)
+        self.threshold = 0.007  # Replace with desired threshold voltage
+        self.min_lick_duration = 0.01  # Replace with desired minimum lick duration (in seconds)
 
         # Set up GPIO
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.lick_pin, GPIO.IN)
+        GPIO.setup(self.lick_pin, GPIO.OUT)
+        GPIO.output(self.lick_pin, GPIO.HIGH)
         GPIO.setup(self.water_pin, GPIO.OUT)
         GPIO.output(self.water_pin, GPIO.LOW)
 
-        self.spi = spidev.SpiDev()
+        # Initialize SPI and MCP3008
+        self.SPI_PORT = 0
+        self.SPI_DEVICE = 0
+        CLK = 11
+        MISO = 9
+        MOSI = 10
+        CS = 13
+        self.mcp = Adafruit_MCP3008.MCP3008(clk=CLK, cs=CS, miso=MISO, mosi=MOSI)
+
         self.channel = 0
-        self.spi.open(0, 0)  # Use SPI bus 0, device 0
-        self.spi.max_speed_hz = 250000  # Set SPI clock speed to 500kHz
 
         # Initialize lick detection filter
         nyquist_freq = 0.5 * self.sample_rate
         normal_cutoff = self.cutoff_freq / nyquist_freq
         self.b, self.a = butter(self.filter_order, normal_cutoff, btype='high', analog=False)
 
-    # def lick_status_check(self):
-    #     """register change only when current status is different than all three
-    #     previous status"""
-    #     self.lick_record = np.roll(self.lick_record, 1)
-    #     self.lick_record[0] = GPIO.input(self.lick_pin)
-    #     change_bool = np.all(self.lick_record != self.lick_status)
-    #     change = 0 if not change_bool else 1 if self.lick_status == 0 else -1
-    #     self.lick_status += change
-    #     return change
-
-    # def lick_status_check(self):
-    #     """Register change only when the current analog reading is different from the previous status"""
-    #     analog_reading = self.read_analog_input(self.channel)
-    #     lick_threshold = 0.5  # Adjust this threshold based on your specific setup
-    #
-    #     current_status = 1 if analog_reading > lick_threshold else 0
-    #     change = current_status - self.lick_status
-    #     self.lick_status = current_status
-    #     return change
-
     def lick_status_check(self):
         """Detect lick events and print their timestamps"""
         voltage = self.read_analog_input(self.channel)
-        if voltage > 0:
-            print(f'current voltage: {voltage}')
         filtered_voltage = lfilter(self.b, self.a, [voltage])
 
-        # Detect peaks above threshold
-        peaks, _ = find_peaks(filtered_voltage, height=self.threshold)
-
-        # Process detected peaks and find lick times
-        for peak_idx in peaks:
-            lick_time = peak_idx / self.sample_rate
-            print(f"Lick detected at {lick_time} seconds")
+        if filtered_voltage > self.threshold:
+            if not self.lick_active:
+                self.lick_active = True
+                self.lick_start_time = time.time()
+                print(f"Lick bout started at {self.lick_start_time:.3f} seconds")
+        else:
+            if self.lick_active:
+                self.lick_active = False
+                self.lick_end_time = time.time()
+                print(f"Lick bout ended at {self.lick_end_time:.3f} seconds")
+                bout_duration = self.lick_end_time - self.lick_start_time
+                print(f"Lick bout duration: {bout_duration:.3f} seconds")
+                self.lick_start_time = None
+                self.lick_end_time = None
 
     def read_analog_input(self, channel):
-        adc = self.spi.xfer2([1, (8 + channel) << 4, 0])
-        print("Raw ADC value:", adc)  # Print the raw ADC value
-        data = ((adc[1] & 3) << 8) + adc[2]
-        print("Calculated voltage:", data * 3.3 / 1023)  # Print the calculated voltage
-        return data
+        value = self.mcp.read_adc(channel)
+        voltage = value / 1023.0 * 3.3  # Convert value to voltage (assuming 3.3V reference)
+        if voltage > 5:
+            print(f"Channel {channel} value: {value}, voltage: {voltage:.2f}V")
+        return voltage
 
     def water_on(self, open_time):
         """turn on water, return time turned on"""
