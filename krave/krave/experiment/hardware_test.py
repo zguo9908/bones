@@ -130,44 +130,44 @@ class PiTest:
         finally:
             self.recording_spout.shutdown()
 
-    def test_two_lick_detections(self):
-        # will be testing this on rig 3
-        print(f'lick pin for ir spout is {self.ir_spout.ir_lick_pin}')
-        print(f'lick pin for capacitivate spout is {self.spout1.lick_pin}')
-        print(f'water pin is {self.ir_spout.water_pin}')
-
-        try:
-            time_limit = 60
-            start = time.time()
-            ir_lick_counter = 0
-            cap_lick_counter = 0
-            ir_lick_start_time = []
-            cap_lick_start_time = []
-
-            ir_lick_end_time = []
-            cap_lick_end_time = []
-            while start + time_limit > time.time():
-                ir_lick_change = self.ir_spout.lick_status_check()
-                cap_lick_change = self.spout1.lick_status_check()
-                if ir_lick_change == 1:
-                    print(f"ir start lick {ir_lick_counter} at {time.time()}")
-                    ir_lick_counter += 1
-                    ir_lick_start_time.append(time.time())
-                elif ir_lick_change == -1:
-                    print(f"end lick {ir_lick_counter} at {time.time()}")
-                    ir_lick_end_time.append(time.time())
-                elif cap_lick_change == 1:
-                    print(f"cap start lick {cap_lick_counter} at {time.time()}")
-                    cap_lick_counter += 1
-                    cap_lick_start_time.append(time.time())
-                elif cap_lick_change == -1:
-                    print(f"end lick {cap_lick_counter} at {time.time()}")
-                    cap_lick_end_time.append(time.time())
-        finally:
-            print(f'start time difference of two spouts {ir_lick_start_time - cap_lick_start_time}')
-            print(f'end time difference of two spouts {ir_lick_end_time - cap_lick_end_time}')
-
-            self.ir_spout.shutdown()
+    # def test_two_lick_detections(self):
+    #     # will be testing this on rig 3
+    #     print(f'lick pin for recording spout is {self.recording_spout.ir_lick_pin}')
+    #     print(f'lick pin for capacitivate spout is {self.spout1.lick_pin}')
+    #     print(f'water pin is {self.recording_spout.water_pin}')
+    #
+    #     try:
+    #         time_limit = 60
+    #         start = time.time()
+    #         ir_lick_counter = 0
+    #         cap_lick_counter = 0
+    #         ir_lick_start_time = []
+    #         cap_lick_start_time = []
+    #
+    #         ir_lick_end_time = []
+    #         cap_lick_end_time = []
+    #         while start + time_limit > time.time():
+    #             vi_lick_change = self.ir_spout.lick_status_check()
+    #             cap_lick_change = self.spout1.lick_status_check()
+    #             if ir_lick_change == 1:
+    #                 print(f"ir start lick {ir_lick_counter} at {time.time()}")
+    #                 ir_lick_counter += 1
+    #                 ir_lick_start_time.append(time.time())
+    #             elif ir_lick_change == -1:
+    #                 print(f"end lick {ir_lick_counter} at {time.time()}")
+    #                 ir_lick_end_time.append(time.time())
+    #             elif cap_lick_change == 1:
+    #                 print(f"cap start lick {cap_lick_counter} at {time.time()}")
+    #                 cap_lick_counter += 1
+    #                 cap_lick_start_time.append(time.time())
+    #             elif cap_lick_change == -1:
+    #                 print(f"end lick {cap_lick_counter} at {time.time()}")
+    #                 cap_lick_end_time.append(time.time())
+    #     finally:
+    #         print(f'start time difference of two spouts {ir_lick_start_time - cap_lick_start_time}')
+    #         print(f'end time difference of two spouts {ir_lick_end_time - cap_lick_end_time}')
+    #
+    #         self.ir_spout.shutdown()
 
     def test_visual_cue(self):
         start = time.time()

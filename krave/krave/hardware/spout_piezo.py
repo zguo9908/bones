@@ -32,7 +32,7 @@ class SpoutPiezo:
         self.filter_order = 2
         self.cutoff_freq = 20  # Replace with desired cutoff frequency
         self.threshold = 0.007  # Replace with desired threshold voltage
-        self.min_lick_duration = 0.01  # Replace with desired minimum lick duration (in seconds)
+        self.min_lick_duration = 0.3  # Replace with desired minimum lick duration (in seconds)
 
         # Set up GPIO
         GPIO.setmode(GPIO.BCM)
@@ -62,20 +62,25 @@ class SpoutPiezo:
         voltage = self.read_analog_input(self.channel)
         filtered_voltage = lfilter(self.b, self.a, [voltage])
 
+        current_time = time.time()
+
         if filtered_voltage > self.threshold:
             if not self.lick_active:
                 self.lick_active = True
-                self.lick_start_time = time.time()
+                self.lick_start_time = current_time
                 print(f"Lick bout started at {self.lick_start_time:.3f} seconds")
+                return 1
         else:
             if self.lick_active:
-                self.lick_active = False
-                self.lick_end_time = time.time()
-                print(f"Lick bout ended at {self.lick_end_time:.3f} seconds")
-                bout_duration = self.lick_end_time - self.lick_start_time
-                print(f"Lick bout duration: {bout_duration:.3f} seconds")
-                self.lick_start_time = None
-                self.lick_end_time = None
+                if current_time - self.lick_start_time >= self.min_lick_duration:
+                    self.lick_active = False
+                    self.lick_end_time = current_time
+                    print(f"Lick bout ended at {self.lick_end_time:.3f} seconds")
+                    bout_duration = self.lick_end_time - self.lick_start_time
+                    print(f"Lick bout duration: {bout_duration:.3f} seconds")
+                    self.lick_start_time = None
+                    self.lick_end_time = None
+                    return -1
 
     def read_analog_input(self, channel):
         value = self.mcp.read_adc(channel)
