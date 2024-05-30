@@ -7,7 +7,7 @@ import numpy as np
 from krave.experiment import states
 from krave import utils
 from krave.hardware.auditory import Auditory
-from krave.hardware.spout_ir import Spout_IR
+
 
 hostname = socket.gethostname()
 if "ziyipi1" in hostname:
@@ -19,24 +19,26 @@ elif "ziyipi3" in hostname:
     # Code for Raspberry Pi with hostname "ziyipi3"
     hostname = "ziyipi3"
     print("Running on ziyipi3")
+    print('getting error on cv2')
+    # from krave.hardware.pi_camera import CameraPi
+
     from krave.hardware.libcamera import CameraViewer
-else:
+elif "ziyipi5" in hostname:
     # Code for other Raspberry Pis or devices
+    hostname = "ziyipi5"
+    print("Running on ziyipi5")
+    from krave.hardware.spout_piezo import SpoutPiezo
+else:
     print("Running on an unknown device")
+
 from krave.hardware.spout import Spout
 from krave.hardware.basler_camera import CameraBasler
 from krave.output.data_writer import DataWriter
 from krave.experiment import timescapes
 from krave.experiment import exp_utils
-import socket
-
-# from krave.hardware.pi_camera import CameraPi
 from threading import Thread
-# ONE PORT VERSION OF THE GIVE-UP TASK IN A HEAD FIXED SET UP.
-# EQUAL TO THE FORCED TRIALS.
 stop = False
 stopped = False
-
 
 class Block:
     def __init__(self,mean_reward_time,overall_reward_prob, time_array):
@@ -56,6 +58,7 @@ class GiveUpTask:
         self.exp_name = exp_name
         self.exp_config = self.get_config()
         self.hardware_name = self.exp_config['hardware_setup']
+        self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_name]
         self.animal_assignment = self.exp_config['timescape']
         self.training_stage = self.exp_config['stage']
         self.training = training
@@ -66,25 +69,21 @@ class GiveUpTask:
         # hardwares
         self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param, self.exp_config, forward, self.training_stage)
 
+        self.auditory = Auditory(self.mouse, self.exp_config, self.hardware_config,  audio_name="1", trial_type='s')
         if self.hostname == "ziyipi1":
-            self.spout = Spout(self.mouse, self.exp_config, spout_name="2")
-            self.auditory = Auditory(self.mouse, self.exp_config, audio_name = "2", trial_type='s')
+            self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
             self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
+
         elif self.hostname == "ziyipi3":
-            self.spout = Spout(self.mouse, self.exp_config, spout_name="1")
-            self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
+            self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
             self.camera = CameraViewer(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         elif self.hostname == "ziyipi5":
-            self.spout = Spout_IR(self.mouse, self.exp_config)
-            self.auditory = Auditory(self.mouse, self.exp_config, audio_name="1", trial_type='s')
+            self.spout = SpoutPiezo(self.mouse, self.hardware_config)
+            # self.auditory = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name="1", trial_type='s')
             self.trigger = CameraBasler(self.hardware_config, self.data_writer)
             self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         else:
             raise Warning("not implemented rig")
-        print(self.auditory.audio_f)
-        # print(self.spout.water_pin)
-        # self.camera = CameraPi()
-        # self.camera_trigger = CameraTrigger(self.mouse, self.exp_config)
 
         # timescape information
         self.mean_reward_time_s = self.exp_config['exp_blocks']['s'][0]
@@ -171,9 +170,7 @@ class GiveUpTask:
         self.time_bg_range = self.exp_config['time_bg_range']
         self.consumption_time = self.exp_config['consumption_time']
         self.punishment_time = self.exp_config['punishment_time']
-        self.max_wait_time= self.exp_config['max_wait_time']
-
-
+        self.max_wait_time = self.exp_config['max_wait_time']
         self.time_array = np.round(np.arange(0, self.max_wait_time, self.step_size),
                                    exp_utils.get_precision(self.step_size) + 1)
         # session variables
@@ -231,7 +228,7 @@ class GiveUpTask:
         string = self.get_string_to_log('nan,0,lick')
         self.data_writer.log(string)
 
-    def get_block(self,block_stats):
+    def get_block(self, block_stats):
         if block_stats[0] == self.mean_reward_time_s:
             block = Block(self.mean_reward_time_s, self.overall_reward_prob_s, self.time_array)
             self.curr_mean_reward_time = self.mean_reward_time_s
@@ -368,6 +365,7 @@ class GiveUpTask:
               f"{self.time_bg_drawn:.2f}s starts at {self.trial_start_time - self.session_start_time:.2f} seconds")
         if self.auto_delivery:
             print(f'time_wait_optimal: {self.time_wait_optimal}')
+        self.start_background()
 
     def end_trial(self):
         """ends a trial"""
@@ -384,36 +382,32 @@ class GiveUpTask:
 
 
     def start_consumption(self):
-        self.auditory.cue_off()
-        self.spout.water_on(self.reward_size)
+        self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num] * self.curr_overall_reward_prob
+        print(f'current bin number is {self.bin_num}')
+        print(f"reward probability is {self.curr_reward_prob}")
+        if self.curr_reward_prob > random.random():
+            self.spout.water_on(self.reward_size)
+            string = self.get_string_to_log('nan,1,reward')
+            self.data_writer.log(string)
+            self.total_reward_count += 1
+            print(f'reward delivered, {self.total_reward_count} total,'
+                  f' which is {self.total_reward_count * self.reward_size} ul')
+        else:
+            print('no reward for this lick')
+        #     self.end_trial()
         self.state = states.IN_CONSUMPTION
         self.consumption_start = time.time()
-        string = self.get_string_to_log('nan,1,reward')
-        self.data_writer.log(string)
-        self.total_reward_count += 1
         self.num_miss_trial = 0  # resets miss trial count
-        print(f'reward delivered, {self.total_reward_count} total,'
-              f' which is {self.total_reward_count * self.reward_size} ul')
+
 
     def start_wait(self):
         self.bin_num = 0
         print("starting to bin the cdf")
         self.state = states.IN_WAIT
-        if self.training.startswith("block"):
-            if self.curr_mean_reward_time == 3:
-                self.auditory.set_frequency('l')
-                print("Frequency for 'l' trial type:", self.auditory.audio_f)
-            else:
-                self.auditory.set_frequency('s')
-                print("Frequency for 's' trial type:", self.auditory.audio_f)
-        else:
-            self.auditory.set_frequency(self.cue)
-        self.auditory.cue_on()
-        string = self.get_string_to_log('nan,1,audio')
-        self.data_writer.log(string)
         self.wait_start_time = time.time()
         string = self.get_string_to_log('nan,1,wait')
         self.data_writer.log(string)
+        self.auditory.cue_off()
 
     def start_background(self):
         """starts background time, logs using data writer, trial does not restart if repeated"""
@@ -423,6 +417,20 @@ class GiveUpTask:
         string = self.get_string_to_log('nan,1,background')
         self.data_writer.log(string)
         print('background time starts')
+
+        if self.training.startswith("block"):
+            if self.curr_mean_reward_time == 3:
+                self.auditory.set_frequency('l')
+                print("Frequency for 'l' trial type:", self.auditory.audio_f)
+            else:
+                self.auditory.set_frequency('s')
+                print("Frequency for 's' trial type:", self.auditory.audio_f)
+        else:
+            self.auditory.set_frequency(self.cue)
+        print('playing cues')
+        self.auditory.cue_on()
+        string = self.get_string_to_log('nan,1,audio')
+        self.data_writer.log(string)
 
     def start(self):
         """
@@ -557,20 +565,17 @@ class GiveUpTask:
                 self.log_lick_ending()
             elif lick_change == 1:
                 self.log_lick()
-
                 if not self.auto_delivery:
-                    # prob_not_rewarded = 1 - self.curr_block.reward_cdf[self.bin_num]
-                    # prob_rewarded_at_t = self.curr_block.reward_pdf[self.bin_num]
-                    # self.curr_reward_prob = (prob_rewarded_at_t / prob_not_rewarded) * self.overall_reward_prob
                     if self.state == states.IN_WAIT:
-                        self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num] * self.curr_overall_reward_prob
-                        print(f'current bin number is {self.bin_num}')
-                        print(f"reward probability is {self.curr_reward_prob}")
-                        if self.curr_reward_prob > random.random():
-                            self.start_consumption()
-                        else:
-                            print('early lick fail the trial')
-                            self.end_trial()
+                        self.start_consumption()
+                        # self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num] * self.curr_overall_reward_prob
+                        # print(f'current bin number is {self.bin_num}')
+                        # print(f"reward probability is {self.curr_reward_prob}")
+                        # if self.curr_reward_prob > random.random():
+                        #     self.start_consumption()
+                        # else:
+                        #     print('early lick fail the trial')
+                        #     self.end_trial()
                     elif self.state == states.IN_BACKGROUND:
                         print("still in back ground, restarting")
                         self.start_background()
@@ -580,7 +585,7 @@ class GiveUpTask:
                 self.start_wait()
 
             if self.state == states.IN_CONSUMPTION and time.time() > self.consumption_start + self.consumption_time:
-                # consumption time passed, trials ends
+                # consumption time pa ssed, trials ends
                 self.end_trial()
 
             if self.state == states.IN_WAIT:

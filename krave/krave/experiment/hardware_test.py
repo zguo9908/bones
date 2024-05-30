@@ -5,7 +5,7 @@ from krave import utils
 # from krave.hardware.auditory import Auditory
 from krave.hardware.auditory import Auditory
 from krave.hardware.basler_camera import CameraBasler
-from krave.hardware.spout_piezo import SpoutPiezo
+
 
 hostname = socket.gethostname()
 # Check if the hostname contains "ziyipi1" or "ziyipi3"
@@ -23,6 +23,7 @@ elif "ziyipi5" in hostname:
     # Code for Raspberry Pi with hostname "ziyipi3"
     print("Running on ziyipi5")
     hostname = "ziyipi5"
+    from krave.hardware.spout_piezo import SpoutPiezo
     from krave.hardware.pi_camera import CameraPi
 else:
     # Code for other Raspberry Pis or devices
@@ -61,7 +62,7 @@ class PiTest:
         # self.LED = LED(self.mouse, self.exp_config)
         self.auditory1 = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name = "1",trial_type='s')
         self.auditory2 = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name = "2",trial_type='l')
-        self.data_writer = DataWriter(self.mouse, self.exp_name, "test", "test",self.exp_config, False)
+        self.data_writer = DataWriter(self.mouse, self.exp_name, "test", "test", self.exp_config, False)
 
         if hostname == "ziyipi3":
             self.camera = CameraViewer('test_video.h264')
@@ -243,14 +244,16 @@ class PiTest:
             self.visual.visual_control_with_after()
 
 
-    def test_water(self, run_time, open_time, cool_time, spout):
+    def test_water(self, run_time, open_time, cool_time, spout, test_vibration):
         if spout == 1:
             testing_spout = self.spout1
         elif spout == 2:
             testing_spout = self.spout2
+        elif spout == 3:
+            testing_spout = self.recording_spout
         else:
             print("no more than 2 spouts assembled")
-
+        print(testing_spout.water_pin)
         try:
             for i in range(run_time):
                 testing_spout.water_on(.1)
@@ -258,9 +261,12 @@ class PiTest:
                 print('drop delivered')
                 testing_spout.water_off()
                 time.sleep(cool_time)
+                if test_vibration:
+                    testing_spout.lick_status_check()
         finally:
             testing_spout.shutdown()
             self.running = False
+    
 
     def test_trigger(self, time_limit=200):
         """tests square wave"""

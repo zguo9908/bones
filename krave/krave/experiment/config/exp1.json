@@ -1,9 +1,9 @@
 {
-  "time_limit": 3000,
+  "time_limit": 30,
   "session_length": 2,
   "block_length_min": 8,
   "block_length_max": 10,
-  "consumption_time": 3,
+  "consumption_time": 2,
   "punishment_time": 3,
   "max_wait_time": 30,
   "reward_size": {"ziyipi1":[0.2],"ziyipi3": [0.15]},
@@ -11,7 +11,7 @@
   "max_missed_trial": 10,
   "shuffle_blocks": true,
   "auto_end": true,
-  "exp_blocks": {"s": [2,0.9,2], "l": [3.8,0.9,2]},
+  "exp_blocks": {"s": [1.2,0.9,2], "l": [3.3,0.9,2]},
   "auditory_cue_frequency": {"s":[1000],"l": [9000]},
   "led_cue": {"s":["blue"],"l": ["green"]},
   "auditory_display_duration": 0.5,
@@ -21,60 +21,32 @@
   "total_trials_median": 450,
   "block_length_range": 2,
   "time_bg_range": 0.5,
-  "timescape": {"ZG020":
-                  {"default":["short","s"], "change":["long","l"]},
-                "ZG021":
+  "timescape": {
+                "ZG038":
                   {"default":["long","l"], "change":["short","s"]},
-                "ZG022":
+                "ZG039":
                   {"default":["long","l"], "change":["short","s"]},
-                "ZG023":
-                  {"default":["long","l"], "change":["short","s"]},
-                "ZG024":
+                "ZG040":
                   {"default":["short","s"], "change":["long","l"]},
-                "ZG025":
+                "ZG041":
                   {"default":["short","s"], "change":["long","l"]},
-                "ZG026":
-                  {"default":["long","l"], "change":["short","s"]},
-                "ZG027":
-                  {"default":["long","l"], "change":["short","s"]},
-                "ZG028":
-                  {"default":["short","s"], "change":["long","l"]},
-                "ZG029":
-                  {"default":["short","s"], "change":["long","l"]},
-                "ZG030":
-                  {"default":["long","l"], "change":["short","s"]},
-                "ZG031":
-                  {"default":["long","l"], "change":["short","s"]},
-                "ZG032":
-                  {"default":["short","s"], "change":["long","l"]},
-                "ZG033":
-                  {"default":["short","s"], "change":["long","l"]},
-                "ZG034":
+                "ZG042":
                   {"default":["long","s"], "change":["short","l"]},
-                "ZG035":
+                "ZG043":
                   {"default":["long","s"], "change":["short","l"]},
-                "ZG036":
+                "ZG044":
                   {"default":["short","l"], "change":["long","s"]},
-                "ZG037":
+                "ZG045":
                   {"default":["short","l"], "change":["long","s"]}
   },
-  "stage": {"ZG020":["change"],
-             "ZG021":["change"],
-             "ZG022":["change"],
-             "ZG023":["change"],
-             "ZG024":["change"],
-             "ZG025":["change"],
-             "ZG026":["change"],
-             "ZG027":["change"],
-             "ZG028":["change"],
-             "ZG029":["change"],
-             "ZG030":["default"],
-             "ZG031":["default"],
-             "ZG032":["default"],
-             "ZG033":["default"],
-             "ZG034":["default"],
-             "ZG035":["default"],
-             "ZG036":["default"],
-             "ZG037":["default"]
+  "stage": {
+             "ZG038":["default"],
+             "ZG039":["default"],
+             "ZG040":["default"],
+             "ZG041":["default"],
+             "ZG042":["default"],
+             "ZG043":["default"],
+             "ZG044":["default"],
+             "ZG045":["default"]
   }
 }

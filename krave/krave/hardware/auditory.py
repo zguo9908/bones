@@ -19,6 +19,7 @@ class Auditory:
         self.cue_duration = self.exp_config['auditory_display_duration']
         self.buzz_on = False
         self.cue_displaying = False
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.audio_pin, GPIO.OUT)
         self.cue_on_time = None
         self.buzzer = GPIO.PWM(self.audio_pin, int(self.audio_f))
