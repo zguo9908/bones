@@ -116,7 +116,7 @@ class PiTest:
     def test_lick_recording(self):
         print(f'lick pin is {self.recording_spout.lick_pin}')
         print(f'water pin is {self.recording_spout.water_pin}')
-
+        self.camera.on(record_video=False)
         try:
             time_limit = 60
             start = time.time()
@@ -130,6 +130,7 @@ class PiTest:
                     print(f"end lick {lick_counter} at {time.time()}")
         finally:
             self.recording_spout.shutdown()
+            self.camera.shutdown()
 
     # def test_two_lick_detections(self):
     #     # will be testing this on rig 3
@@ -254,6 +255,7 @@ class PiTest:
         else:
             print("no more than 2 spouts assembled")
         print(testing_spout.water_pin)
+        self.camera.on(record_video=False)
         try:
             for i in range(run_time):
                 testing_spout.water_on(.1)
@@ -265,7 +267,8 @@ class PiTest:
                     testing_spout.lick_status_check()
         finally:
             testing_spout.shutdown()
-            self.running = False
+            self.running =False
+            self.camera.shutdown()
     
 
     def test_trigger(self, time_limit=200):

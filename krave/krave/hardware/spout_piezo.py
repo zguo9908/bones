@@ -31,7 +31,7 @@ class SpoutPiezo:
         self.sample_rate = 1000  # Replace with your desired sample rate
         self.filter_order = 2
         self.cutoff_freq = 20  # Replace with desired cutoff frequency
-        self.threshold = 0.007  # Replace with desired threshold voltage
+        self.threshold = 0.02   # Replace with desired threshold voltage
         self.min_lick_duration = 0.3  # Replace with desired minimum lick duration (in seconds)
 
         # Set up GPIO
@@ -61,7 +61,7 @@ class SpoutPiezo:
         """Detect lick events and print their timestamps"""
         voltage = self.read_analog_input(self.channel)
         filtered_voltage = lfilter(self.b, self.a, [voltage])
-
+       # print(filtered_voltage)
         current_time = time.time()
 
         if filtered_voltage > self.threshold:

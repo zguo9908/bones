@@ -18,15 +18,15 @@ if __name__ == '__main__':
 
     #PiTest("ZG002", "exp1").test_audio(1)
    # PiTest("ZG000","exp1").test_pi_camera_preview()
-   #  PiTest("ZG014", "exp1").test_water(run_time = 30, open_time=0.2, cool_time=0.2, spout=3)
+    #PiTest("ZG014", "exp1").test_water(run_time = 30, open_time=0.2, cool_time=0.2, spout=3, test_vibration=True )
     # PiTest("ZG001", "exp1").test_two_spouts_with_audio(time_limit = 30)
     # PiTest("RZ002", "exp1").lick_validation(time_limit = 30)
      # PiTest("RZ002", "exp1").test_drawing_bg_time(avg_bg_time=3)
     #PiTest("RZ001", "exp1").reset()
    #PiTest("ZG000",'exp1').test_two_lick_detections()
-    # PiTest("ZG000",'exp1').test_lick_recording()
+     PiTest("ZG000",'exp1').test_lick_recording()
     #PiTest("ZG000",'exp1').test_trigger()
-    GiveUpTask("ZG040", "exp1", "no_block_regular", "param_v2").run()
+   # GiveUpTask("ZG040", "exp1", "no_block_regular", "param_v2").run()
 
 
 
