@@ -31,7 +31,7 @@ class SpoutPiezo:
         self.sample_rate = 1000  # Replace with your desired sample rate
         self.filter_order = 2
         self.cutoff_freq = 20  # Replace with desired cutoff frequency
-        self.threshold = 0.02   # Replace with desired threshold voltage
+        self.threshold = 0.013  # Replace with desired threshold voltage
         self.min_lick_duration = 0.3  # Replace with desired minimum lick duration (in seconds)
 
         # Set up GPIO
@@ -95,6 +95,7 @@ class SpoutPiezo:
         self.duration = open_time
         self.water_dispensing = True
         self.water_opened_time = time.time()
+        print(f'water delivered at {self.water_opened_time}')
 
     def water_off(self):
         """turn off water, and return time turned off"""

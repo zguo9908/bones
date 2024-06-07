@@ -2,26 +2,21 @@ import statistics
 import time
 import random
 import socket
-import math
 import numpy as np
 from krave.experiment import states
 from krave import utils
 from krave.hardware.auditory import Auditory
 
-
 hostname = socket.gethostname()
 if "ziyipi1" in hostname:
-    # Code for Raspberry Pi with hostname "ziyipi1"
     hostname = "ziyipi1"
     print("Running on ziyipi1")
     from krave.hardware.pi_camera import CameraPi
 elif "ziyipi3" in hostname:
-    # Code for Raspberry Pi with hostname "ziyipi3"
     hostname = "ziyipi3"
     print("Running on ziyipi3")
     print('getting error on cv2')
     # from krave.hardware.pi_camera import CameraPi
-
     from krave.hardware.libcamera import CameraViewer
 elif "ziyipi5" in hostname:
     # Code for other Raspberry Pis or devices
@@ -36,12 +31,9 @@ from krave.hardware.basler_camera import CameraBasler
 from krave.output.data_writer import DataWriter
 from krave.experiment import timescapes
 from krave.experiment import exp_utils
-from threading import Thread
-stop = False
-stopped = False
 
 class Block:
-    def __init__(self,mean_reward_time,overall_reward_prob, time_array):
+    def __init__(self, mean_reward_time, overall_reward_prob, time_array):
         self.mean_reward_time = mean_reward_time
         self.overall_reward_prob = overall_reward_prob
         self.n_of_trials = None
@@ -67,7 +59,8 @@ class GiveUpTask:
         self.record = record
 
         # hardwares
-        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param, self.exp_config, forward, self.training_stage)
+        self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param,
+                                      self.exp_config, forward, self.training_stage)
 
         self.auditory = Auditory(self.mouse, self.exp_config, self.hardware_config,  audio_name="1", trial_type='s')
         if self.hostname == "ziyipi1":
@@ -88,6 +81,9 @@ class GiveUpTask:
         # timescape information
         self.mean_reward_time_s = self.exp_config['exp_blocks']['s'][0]
         self.mean_reward_time_l = self.exp_config['exp_blocks']['l'][0]
+
+        self.optimal_reward_time_s = self.exp_config['optimal']['s'][0]
+        self.optimal_reward_time_l = self.exp_config['optimal']['l'][0]
 
         self.overall_reward_prob_s = self.exp_config['exp_blocks']['s'][1]
         self.overall_reward_prob_l = self.exp_config['exp_blocks']['l'][1]
@@ -162,7 +158,6 @@ class GiveUpTask:
         self.optimal_dict = dict.fromkeys(range(self.total_blocks))
         self.total_trial_num = None
         self.trial_list = None
-        self.optimal_list = None
         self.block_len = None
         self.block_list = []
 
@@ -173,34 +168,28 @@ class GiveUpTask:
         self.max_wait_time = self.exp_config['max_wait_time']
         self.time_array = np.round(np.arange(0, self.max_wait_time, self.step_size),
                                    exp_utils.get_precision(self.step_size) + 1)
-        # session variables
-
-        # times
         self.session_start_time = None
         self.block_start_time = None
         self.trial_start_time = float('-inf')
-        # self.cue_start_time = None
         self.wait_start_time = float('-inf')
         self.consumption_start = None
         self.background_start_time = None
         self.punishment_start = None
         self.bin_num = None
 
-        # where we are
         self.block_num = -1
         self.block_trial_num = -1
         self.session_trial_num = -1
         self.curr_block = None
+        self.optimal_time = -1
 
         self.time_bg = None  # average bg time of the block
         self.time_bg_drawn = None  # drawn bg time from uniform distribution
-        self.time_wait_optimal = None
         self.state = states.IN_BACKGROUND
         self.lick_counter = 0
         self.total_reward_count = 0
         self.num_miss_trial = 0
         self.running = False
-
 
     def get_config(self):
         """Get experiment config from json"""
@@ -242,36 +231,6 @@ class GiveUpTask:
         print(block.mean_reward_time)
         return block
 
-    def get_wait_time_optimal(self):
-        """
-        makes a dictionary with block num as key and a list of optimal wait time for each trial as values
-        runs for shaping tasks when reward delivery is not lick triggered
-        this function is a bit slow, so must be run before session starts
-        """
-        print('Calculating optimal wait times')
-        count = 0  # used
-        total_list = []  # used to check if there are none values in the dict
-        # if not self.random_draw:
-        for blk in self.session_dict:
-            optimal_list = []
-            for trl in self.session_dict[blk]:
-                optimal_list.append(utils.calculate_time_wait_optimal(trl))
-            count += len(optimal_list)
-            total_list.append(optimal_list)
-            self.optimal_dict[blk] = optimal_list
-        # else:
-        #     self.time_bg = self.session_dict[1][1]
-        #     optimal_time = utils.calculate_time_wait_optimal(self.time_bg)
-        #     for blk in self.session_dict:
-        #         optimal_list = [optimal_time]*len(self.session_dict[blk])
-        #         count += len(optimal_list)
-        #         total_list.append(optimal_list)
-        #         self.optimal_dict[blk] = optimal_list
-
-        if count != self.total_trial_num:
-            raise Exception(f'Missing {self.total_trial_num - count} optimal values!')
-        if None in total_list:
-            raise ValueError('None values in optimal_dict')
 
     def get_session_structure(self):
         """
@@ -340,21 +299,13 @@ class GiveUpTask:
         # print(f'bg time of each block: {self.block_list}')
         print(f'{self.total_trial_num} trials total')
 
-
-
-
     def start_trial(self):
         """Starts a trial within a block"""
         self.bin_num = 0  # bin of current time/reward probability
         self.block_trial_num += 1
         self.session_trial_num += 1
-        # print(self.block_trial_num)
-        # print(len(self.trial_list))
-        # print(self.block_len)
         self.time_bg_drawn = self.trial_list[self.block_trial_num]
 
-        if self.auto_delivery:
-            self.time_wait_optimal = self.optimal_list[self.block_trial_num]
         self.trial_start_time = time.time()
         self.background_start_time = self.trial_start_time
         self.state = states.IN_BACKGROUND
@@ -364,7 +315,7 @@ class GiveUpTask:
         print(f"block {self.block_num} trial {self.block_trial_num, self.session_trial_num} bg_time "
               f"{self.time_bg_drawn:.2f}s starts at {self.trial_start_time - self.session_start_time:.2f} seconds")
         if self.auto_delivery:
-            print(f'time_wait_optimal: {self.time_wait_optimal}')
+            print(f'time_wait_optimal: {self.optimal_time}')
         self.start_background()
 
     def end_trial(self):
@@ -379,7 +330,6 @@ class GiveUpTask:
                 self.end_block()
             else:
                 self.start_trial()
-
 
     def start_consumption(self):
         self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num] * self.curr_overall_reward_prob
@@ -398,7 +348,6 @@ class GiveUpTask:
         self.state = states.IN_CONSUMPTION
         self.consumption_start = time.time()
         self.num_miss_trial = 0  # resets miss trial count
-
 
     def start_wait(self):
         self.bin_num = 0
@@ -437,14 +386,9 @@ class GiveUpTask:
         starts a session and initiates display to all black
         """
         self.get_session_structure()
-        # self.camera.on()
-        if self.auto_delivery:
-            self.get_wait_time_optimal()
-       # if self.hostname == "ziyipi3":
-        self.camera.on(record_video = False)
+        self.camera.on(record_video=False)
         time.sleep(20)
         self.session_start_time = time.time()
-
         self.running = True
         string = self.get_string_to_log('nan,1,session')
         self.data_writer.log(string)
@@ -487,22 +431,18 @@ class GiveUpTask:
         self.block_trial_num = -1  # to make sure correct indexing because start_trial is called in this function
         self.block_start_time = time.time()
         self.trial_list = self.session_dict[self.block_num]
-        #     # maybe, don't need these
         self.curr_mean_reward_time = self.curr_block.mean_reward_time
-        if self.curr_mean_reward_time == 3:
-            self.auditory.set_frequency('l')
-            print("Frequency for 'l' trial type:", self.auditory.audio_f)
-        else:
-            self.auditory.set_frequency('s')
-            print("Frequency for 's' trial type:", self.auditory.audio_f)
-
         if self.sometimes_not_rewarded:
-             self.curr_overall_reward_prob = self.curr_block.overall_reward_prob
+            self.curr_overall_reward_prob = self.curr_block.overall_reward_prob
         else:
             self.curr_overall_reward_prob = 1
 
         if self.auto_delivery:
-            self.optimal_list = self.optimal_dict[self.block_num]
+            if self.timescape == 'long':
+                self.optimal_time = self.optimal_reward_time_l
+            else:
+                self.optimal_time = self.optimal_reward_time_s
+
         self.block_len = len(self.trial_list)
         print(self.trial_list)
         self.time_bg = statistics.fmean(self.trial_list)
@@ -541,15 +481,6 @@ class GiveUpTask:
         """
         print(f"trial type {self.training} ; optimal delivery {self.auto_delivery}")
         self.start()
-        # cue_start = None
-        global stop
-        global stopped
-
-        # t1 = Thread(target=StopButton)
-        # t1.start()
-        # try:
-        #     if self.calibrate:
-        #         self.spout.calibrate()
         while self.running:
             self.spout.water_cleanup()
             self.auditory.cue_cleanup()
@@ -568,14 +499,6 @@ class GiveUpTask:
                 if not self.auto_delivery:
                     if self.state == states.IN_WAIT:
                         self.start_consumption()
-                        # self.curr_reward_prob = self.curr_block.reward_cdf[self.bin_num] * self.curr_overall_reward_prob
-                        # print(f'current bin number is {self.bin_num}')
-                        # print(f"reward probability is {self.curr_reward_prob}")
-                        # if self.curr_reward_prob > random.random():
-                        #     self.start_consumption()
-                        # else:
-                        #     print('early lick fail the trial')
-                        #     self.end_trial()
                     elif self.state == states.IN_BACKGROUND:
                         print("still in back ground, restarting")
                         self.start_background()
@@ -585,11 +508,10 @@ class GiveUpTask:
                 self.start_wait()
 
             if self.state == states.IN_CONSUMPTION and time.time() > self.consumption_start + self.consumption_time:
-                # consumption time pa ssed, trials ends
+                # consumption time passed, trials ends
                 self.end_trial()
-
             if self.state == states.IN_WAIT:
-                if self.auto_delivery and time.time() > self.wait_start_time + self.time_wait_optimal:
+                if self.auto_delivery and time.time() > self.wait_start_time + self.optimal_time:
                     self.start_consumption()
                 elif not self.auto_delivery and time.time() > self.wait_start_time + self.max_wait_time:
                     print('no lick, miss trial')
@@ -599,17 +521,8 @@ class GiveUpTask:
                 print("exceeds max bin numbers in the trial, starting next one")
                 self.end_trial()
 
-            # if self.state == states.IN_PUNISHMENT and time.time() > self.punishment_start + self.punishment_time:
-            #     # punishment ends -> bg time
-            #     self.end_punishment()
-            # if stop:
-            #     stopped = True
-            #     print('stopped via stop button')
-            #     break
-    # finally:
         if not self.running:
             self.end()
-
 
     def start_punishment(self):
         """starts punishment time, logs using data writer, trial does not restart"""
@@ -628,42 +541,3 @@ class GiveUpTask:
         string = self.get_string_to_log('nan,0,punishment')
         self.data_writer.log(string)
         print('start background time')
-
-
-
-
-#-----------------------unfinished work for GUI with stop task button--------------------------------------#
-# class StopButton:
-#     def __init__(self):
-#         self.root = tk.Tk()
-#         self.root.geometry("300x200")
-#         self.root.title('Google Upload')
-#         my_font = font.Font(size=16)
-#         self.text = tk.StringVar(value='Stop After Current Upload')
-#         self.button = tk.Button(
-#             master=self.root,
-#             textvariable=self.text,
-#             font=my_font,
-#             width=40,
-#             height=12,
-#             bg="white",
-#             fg="black",
-#             command=self.stop)
-#         self.button.pack()
-#         self._job = self.root.after(1000, self.check_continue)
-#         self.root.mainloop()
-#
-#     def stop(self):
-#         global stop
-#         stop = True
-#         self.text.set('stopping...')
-#
-#     def check_continue(self):
-#         global stopped
-#         if stopped:
-#             if self._job is not None:
-#                 self.root.after_cancel(self._job)
-#                 self._job = None
-#             self.root.destroy()
-#         else:
-#             self._job = self.root.after(1000, self.check_continue)

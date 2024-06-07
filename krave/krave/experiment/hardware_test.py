@@ -126,6 +126,9 @@ class PiTest:
                 if lick_change == 1:
                     print(f"start lick {lick_counter} at {time.time()}")
                     lick_counter += 1
+                    self.recording_spout.water_on(0.1)
+                    time.sleep(0.2)
+                    self.recording_spout.water_off()
                 elif lick_change == -1:
                     print(f"end lick {lick_counter} at {time.time()}")
         finally:
@@ -196,22 +199,6 @@ class PiTest:
         self.visual.shutdown()
         print("TIME IS UP")
 
-#-------------deprecated LED function------------------need other pins
-    # def test_LED(self):
-    #     time_limit = 30
-    #     start = time.time()
-    #     while start + time_limit > time.time():
-    #
-    #         self.LED.set_color("l")
-    #         time.sleep(5)
-    #         self.LED.cue_on()
-    #         time.sleep(5)
-    #         self.LED.set_color("s")
-    #         time.sleep(5)
-    #         self.LED.cue_on()
-    #     self.LED.shutdown()
-
-
     def test_audio(self, auditory):
         if auditory == 1:
             testing_auditory = self.auditory1
@@ -244,7 +231,6 @@ class PiTest:
         while self.running:
             self.visual.visual_control_with_after()
 
-
     def test_water(self, run_time, open_time, cool_time, spout, test_vibration):
         if spout == 1:
             testing_spout = self.spout1
@@ -267,9 +253,8 @@ class PiTest:
                     testing_spout.lick_status_check()
         finally:
             testing_spout.shutdown()
-            self.running =False
+            self.running = False
             self.camera.shutdown()
-    
 
     def test_trigger(self, time_limit=200):
         """tests square wave"""

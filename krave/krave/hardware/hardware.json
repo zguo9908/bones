@@ -1,6 +1,6 @@
 {
   "setup1": {
-    "desktop_ip": "192.168.137.1",
+    "desktop_ip": "10.16.80.155",
     "user_name": "ziyiguo",
     "password": "Shuler!",
     "pi_user_name": "pi",
