@@ -31,7 +31,7 @@ class SpoutPiezo:
         self.sample_rate = 1000  # Replace with your desired sample rate
         self.filter_order = 2
         self.cutoff_freq = 20  # Replace with desired cutoff frequency
-        self.threshold = 0.013  # Replace with desired threshold voltage
+        self.threshold = 0.018  # Replace with desired threshold voltage
         self.min_lick_duration = 0.3  # Replace with desired minimum lick duration (in seconds)
 
         # Set up GPIO

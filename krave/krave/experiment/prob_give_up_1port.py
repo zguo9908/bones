@@ -357,6 +357,8 @@ class GiveUpTask:
         string = self.get_string_to_log('nan,1,wait')
         self.data_writer.log(string)
         self.auditory.cue_off()
+        string = self.get_string_to_log('nan,0,audio')
+        self.data_writer.log(string)
 
     def start_background(self):
         """starts background time, logs using data writer, trial does not restart if repeated"""
@@ -404,14 +406,12 @@ class GiveUpTask:
         if self.hostname == "ziyipi5":
             self.trigger.shutdown()
         self.camera.shutdown()
-        global stopped
-        if stopped:
-            self.data_writer.log(self.get_string_to_log('nan,0,end_via_button'))
-        else:
-            self.data_writer.log(self.get_string_to_log('nan,0,ran_to_end'))
-      #  self.camera.shutdown()
+        # global stopped
+        # if stopped:
+        #     self.data_writer.log(self.get_string_to_log('nan,0,end_via_button'))
+        # else:
+        self.data_writer.log(self.get_string_to_log('nan,0,ran_to_end'))
         self.auditory.shutdown()
-        # self.spout.shutdown()
         session_data = {
             'total_trial': self.session_trial_num,
             'total_reward': self.total_reward_count,

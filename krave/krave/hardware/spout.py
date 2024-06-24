@@ -13,7 +13,8 @@ class Spout:
 
         self.hardware_config = hardware_config
         self.lick_pin = self.hardware_config['spouts'][spout_name][0]
-        self.water_pin = self.hardware_config['spouts'][spout_name][1]
+        self.reward_pins = [hardware_config['spouts'][spout_name][1], hardware_config['spout_to_box']]
+        print(self.reward_pins)
         # print(self.lick_pin)
         # print(self.water_pin)
         self.test_opening_times = [0.01, 0.03, 0.05, 0.08, 0.1, 0.15]
@@ -26,8 +27,8 @@ class Spout:
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.lick_pin, GPIO.IN)
-        GPIO.setup(self.water_pin, GPIO.OUT)
-        GPIO.output(self.water_pin, GPIO.LOW)
+        # GPIO.setup(self.water_pin, GPIO.OUT)
+        GPIO.setup(self.reward_pins, GPIO.OUT, initial=GPIO.LOW)
 
     def lick_status_check(self):
         """register change only when current status is different than all three
@@ -42,17 +43,16 @@ class Spout:
 
     def water_on(self, open_time):
         """turn on water, return time turned on"""
-        GPIO.output(self.water_pin, GPIO.HIGH)
+        for pin in self.reward__pins:
+            GPIO.output(pin, GPIO.HIGH)
         self.duration = open_time
         self.water_dispensing = True
         self.water_opened_time = time.time()
 
     def water_off(self):
         """turn off water, and return time turned off"""
-        # print(self.water_pin)
-        # GPIO.setmode(GPIO.BCM)
-        # GPIO.setup(self.water_pin, GPIO.OUT)
-        GPIO.output(self.water_pin, GPIO.LOW)
+        for pin in self.reward_pins:
+            GPIO.output(pin, GPIO.LOW)
         self.water_dispensing = False
 
     def give_reward(self, reward_duration):
@@ -83,40 +83,3 @@ class Spout:
                     time.sleep(0.2)
              input("Press Enter to continue...")
 
-    def calibrate_old(self):
-        self.total_open_times = []
-        self.water_weights = []
-        try:
-            print('calibrating port')
-            repeats = 1  # repeating the same weight
-            iteration = 100  # number of times opened of solenoid
-            for t in self.calibration_times:
-                for r in range(repeats):
-                    total_open_time = 0
-                    for _ in range(iteration):
-                        self.water_on(t)
-                        time.sleep(t)
-                        total_open_time += t
-                        self.water_off()
-                        time.sleep(0.2)
-                    self.total_open_times.append(total_open_time)
-                    water_weight = input(f'open time {t} iter {r} water weight: ')
-                    self.water_weights.append(float(water_weight))
-                    input("Press Enter to continue...")
-        finally:
-            self.shutdown()
-            print(f'total open times {self.total_open_times}')
-            print(f'water weights {self.water_weights}')
-
-            self.total_open_times = np.asarray(self.total_open_times).reshape(-1, 1)
-            self.water_weights = np.asarray(self.water_weights)
-            model = LinearRegression(fit_intercept=False).fit(self.total_open_times, self.water_weights)
-            self.slope = model.coef_[0]
-            print('slope: ', self.slope)
-            print('REMEMBER TO ENTER TO SPOUT INITIATION!!!')
-
-    def calculate_duration(self, reward_size_ul):
-        weight_g = reward_size_ul * 0.001
-        duration = weight_g / self.slope
-        print('sol_open_time: ', duration)
-        return duration

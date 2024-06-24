@@ -18,7 +18,6 @@ class CameraViewer:
     def on(self, record_video=False):  # Modified to accept a flag for recording
         self.cam_on = True
         self.record_video = record_video  # Set the recording flag
-
         self.camera_thread = threading.Thread(target=self._display_camera_feed)
         self.camera_thread.start()
 
@@ -44,16 +43,12 @@ class CameraViewer:
             width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             self.video_writer = cv2.VideoWriter(self.record_filename, fourcc, fps, (width, height))
-
         while self.cam_on:
             ret, frame = self.cap.read()
-
             if ret:
                 cv2.imshow('Camera Feed', frame)
-
                 if self.record_video:
                     self.video_writer.write(frame)
-
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 

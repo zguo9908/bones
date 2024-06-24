@@ -1,5 +1,5 @@
 {
-  "time_limit": 27000,
+  "time_limit": 30000,
   "session_length": 2,
   "block_length_min": 8,
   "block_length_max": 10,

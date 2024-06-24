@@ -11,12 +11,14 @@
     "recording_spout": {
       "1": [13,5]
     },
+    "spout_to_box": 12,
     "audio": {
       "1": [22],
       "2": [25]
     },
     "camera": 26,
     "camera_to_box": 25,
+
     "camera_frequency": 50,
     "exposure_time": 1200
   }

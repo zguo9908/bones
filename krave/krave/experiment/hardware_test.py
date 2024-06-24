@@ -2,7 +2,6 @@ import socket
 import time
 
 from krave import utils
-# from krave.hardware.auditory import Auditory
 from krave.hardware.auditory import Auditory
 from krave.hardware.basler_camera import CameraBasler
 
@@ -32,7 +31,6 @@ else:
 
 from krave.hardware.led import LED
 from krave.hardware.spout import Spout
-from krave.hardware.spout_ir import Spout_IR
 from krave.output.data_writer import DataWriter
 import numpy as np
 import numpy.core.multiarray
