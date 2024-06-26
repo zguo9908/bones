@@ -113,7 +113,7 @@ class PiTest:
 
     def test_lick_recording(self):
         print(f'lick pin is {self.recording_spout.lick_pin}')
-        print(f'water pin is {self.recording_spout.water_pin}')
+
         self.camera.on(record_video=False)
         try:
             time_limit = 60
@@ -238,7 +238,7 @@ class PiTest:
             testing_spout = self.recording_spout
         else:
             print("no more than 2 spouts assembled")
-        print(testing_spout.water_pin)
+    #    print(testing_spout.water_pin)
         self.camera.on(record_video=False)
         try:
             for i in range(run_time):

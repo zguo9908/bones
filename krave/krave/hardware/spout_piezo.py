@@ -14,7 +14,8 @@ class SpoutPiezo:
         self.mouse = mouse
         self.hardware_config = hardware_config
         self.lick_pin = self.hardware_config['recording_spout'][spout_name][0]
-        self.water_pin = self.hardware_config['recording_spout'][spout_name][1]
+        self.reward_pins = [hardware_config['recording_spout'][spout_name][1], hardware_config['spout_to_box']]
+        print(self.reward_pins)
         self.test_opening_times = [0.01, 0.03, 0.05, 0.08, 0.1, 0.15]
 
         self.lick_status = 0
@@ -38,8 +39,8 @@ class SpoutPiezo:
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.lick_pin, GPIO.OUT)
         GPIO.output(self.lick_pin, GPIO.HIGH)
-        GPIO.setup(self.water_pin, GPIO.OUT)
-        GPIO.output(self.water_pin, GPIO.LOW)
+        GPIO.setup(self.reward_pins, GPIO.OUT, initial=GPIO.LOW)
+
 
         # Initialize SPI and MCP3008
         self.SPI_PORT = 0
@@ -91,7 +92,8 @@ class SpoutPiezo:
 
     def water_on(self, open_time):
         """turn on water, return time turned on"""
-        GPIO.output(self.water_pin, GPIO.HIGH)
+        for pin in self.reward_pins:
+            GPIO.output(pin, GPIO.HIGH)
         self.duration = open_time
         self.water_dispensing = True
         self.water_opened_time = time.time()
@@ -99,7 +101,8 @@ class SpoutPiezo:
 
     def water_off(self):
         """turn off water, and return time turned off"""
-        GPIO.output(self.water_pin, GPIO.LOW)
+        for pin in self.reward_pins:
+            GPIO.output(pin, GPIO.LOW)
         self.water_dispensing = False
 
     def give_reward(self, reward_duration):
