@@ -6,7 +6,7 @@
   "consumption_time": 2,
   "punishment_time": 3,
   "max_wait_time": 30,
-  "reward_size": {"ziyipi1":[0.2],"ziyipi3": [0.15]},
+  "reward_size": {"ziyipi1":[0.2],"ziyipi3": [0.15],"ziyipi5": [0.15]},
   "hardware_setup": "setup1",
   "max_missed_trial": 10,
   "shuffle_blocks": true,

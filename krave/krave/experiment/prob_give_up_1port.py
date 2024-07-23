@@ -23,6 +23,7 @@ elif "ziyipi5" in hostname:
     hostname = "ziyipi5"
     print("Running on ziyipi5")
     from krave.hardware.spout_piezo import SpoutPiezo
+    from krave.hardware.pi_camera import CameraPi
 else:
     print("Running on an unknown device")
 
@@ -56,7 +57,10 @@ class GiveUpTask:
         self.training = training
         self.param = param
         self.calibrate = calibrate
-        self.record = record
+        if hostname == "ziyipi5":
+            self.record = True
+        else:
+            self.record = record
 
         # hardwares
         self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param,
@@ -71,7 +75,7 @@ class GiveUpTask:
             self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
             self.camera = CameraViewer(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         elif self.hostname == "ziyipi5":
-            self.spout = SpoutPiezo(self.mouse, self.hardware_config)
+            self.spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1")
             # self.auditory = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name="1", trial_type='s')
             self.trigger = CameraBasler(self.hardware_config, self.data_writer)
             self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
@@ -196,9 +200,7 @@ class GiveUpTask:
         return utils.get_config('krave.experiment', f'config/{self.exp_name}.json')
 
     def get_string_to_log(self, event):
-        return f'{time.time()-self.trial_start_time},{time.time()-self.wait_start_time},' \
-               f'{self.block_num},{self.session_trial_num},{self.block_trial_num},{self.state},{self.time_bg},' \
-               f'{self.curr_mean_reward_time},{self.curr_overall_reward_prob}, {self.total_reward_count},' + event
+        return self.status() + event
 
     def log_lick(self):
         """logs lick using data writer"""
@@ -211,11 +213,17 @@ class GiveUpTask:
 
         string = self.get_string_to_log(f'{self.curr_reward_prob},1,lick')
         self.data_writer.log(string)
+        if self.record:
+            string_2 = self.get_string_to_log(f'{self.curr_reward_prob},{self.spout.analog},lick')
+            self.data_writer.log(string_2)
 
     def log_lick_ending(self):
         """logs lick ending using data writer"""
         string = self.get_string_to_log('nan,0,lick')
         self.data_writer.log(string)
+        if self.record:
+            string_2 = self.get_string_to_log(f'{self.curr_reward_prob},{self.spout.analog},lick')
+            self.data_writer.log(string_2)
 
     def get_block(self, block_stats):
         if block_stats[0] == self.mean_reward_time_s:
@@ -230,7 +238,6 @@ class GiveUpTask:
             print('long block created')
         print(block.mean_reward_time)
         return block
-
 
     def get_session_structure(self):
         """
@@ -474,6 +481,11 @@ class GiveUpTask:
             self.running = False
         else:
             self.running = True
+
+    def status(self):
+        return f'{time.time()-self.trial_start_time},{time.time()-self.wait_start_time},' \
+               f'{self.block_num},{self.session_trial_num},{self.block_trial_num},{self.state},{self.time_bg},' \
+               f'{self.curr_mean_reward_time},{self.curr_overall_reward_prob}, {self.total_reward_count},'
 
     def run(self):
         """
