@@ -6,32 +6,37 @@ import numpy as np
 from krave.experiment import states
 from krave import utils
 from krave.hardware.auditory import Auditory
-
-hostname = socket.gethostname()
-if "ziyipi1" in hostname:
-    hostname = "ziyipi1"
-    print("Running on ziyipi1")
-    from krave.hardware.pi_camera import CameraPi
-elif "ziyipi3" in hostname:
-    hostname = "ziyipi3"
-    print("Running on ziyipi3")
-    print('getting error on cv2')
-    # from krave.hardware.pi_camera import CameraPi
-    from krave.hardware.libcamera import CameraViewer
-elif "ziyipi5" in hostname:
-    # Code for other Raspberry Pis or devices
-    hostname = "ziyipi5"
-    print("Running on ziyipi5")
-    from krave.hardware.spout_piezo import SpoutPiezo
-    from krave.hardware.pi_camera import CameraPi
-else:
-    print("Running on an unknown device")
-
+from krave.hardware.spout_piezo import SpoutPiezo,ThresholdMethod
 from krave.hardware.spout import Spout
 from krave.hardware.basler_camera import CameraBasler
 from krave.output.data_writer import DataWriter
 from krave.experiment import timescapes
 from krave.experiment import exp_utils
+
+hostname = socket.gethostname()
+if "ziyipi1" in hostname:
+    print("Running on ziyipi1")
+    hostname = "ziyipi1"
+    from krave.hardware.pi_camera import CameraPi
+elif "ziyipi2" in hostname:
+    print("Running on ziyipi2")
+    hostname = "ziyipi2"
+    from krave.hardware.pi_camera import CameraPi
+elif "ziyipi4" in hostname:
+    print("Running on ziyipi4")
+    hostname = "ziyipi4"
+    from krave.hardware.pi_camera import CameraPi
+elif "ziyipi8" in hostname:
+    print("Running on ziyipi8")
+    hostname = "ziyipi8"
+    from krave.hardware.pi_camera import CameraPi
+elif "ziyipi5" in hostname:
+    print("Running on ziyipi5")
+    hostname = "ziyipi5"
+    from krave.hardware.pi_camera import CameraPi
+else:
+    print("Running on an unknown device")
+
 
 class Block:
     def __init__(self, mean_reward_time, overall_reward_prob, time_array):
@@ -43,7 +48,7 @@ class Block:
 
 
 class GiveUpTask:
-    def __init__(self, mouse, exp_name, training, param, calibrate=False, record=False, forward = True):
+    def __init__(self, mouse, exp_name, training, param, use_piezo=False, calibrate=False, record=False, forward = True):
         self.hostname = hostname
 
         self.total_trial_num = None
@@ -53,7 +58,8 @@ class GiveUpTask:
         self.hardware_name = self.exp_config['hardware_setup']
         self.hardware_config = utils.get_config('krave.hardware', 'hardware.json')[self.hardware_name]
         self.animal_assignment = self.exp_config['timescape']
-        self.training_stage = self.exp_config['stage']
+        self.training_stage = self.exp_config['training_dist']
+        self.stage = self.exp_config['stage']
         self.training = training
         self.param = param
         self.calibrate = calibrate
@@ -64,16 +70,24 @@ class GiveUpTask:
 
         # hardwares
         self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param,
-                                      self.exp_config, forward, self.training_stage)
+                                      self.exp_config, forward, hostname,
+                                      use_piezo, self.training_stage, self.stage)
 
         self.auditory = Auditory(self.mouse, self.exp_config, self.hardware_config,  audio_name="1", trial_type='s')
-        if self.hostname == "ziyipi1":
-            self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
+
+        if self.hostname in ["ziyipi1", "ziyipi2", "ziyipi4", "ziyipi8"]:
+            if use_piezo:
+                self.spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1",
+                                        threshold_method=ThresholdMethod.DYNAMIC_STD,
+                                        dynamic_threshold_multiplier=1.5,
+                                        baseline_window_size=300)
+            else:
+                self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
             self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
 
-        elif self.hostname == "ziyipi3":
-            self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
-            self.camera = CameraViewer(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
+        # elif self.hostname in ["ziyipi3" , "ziyipi7"]:
+        #     self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
+        #     self.camera = CameraViewer(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         elif self.hostname == "ziyipi5":
             self.spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1")
             # self.auditory = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name="1", trial_type='s')
@@ -285,8 +299,6 @@ class GiveUpTask:
              elif self.training.endswith("l"):
                  block_stats_list = [block_types[1]] * self.total_blocks
                  self.block_list = [self.get_block(block_types[1])] * self.total_blocks
-        # print(self.block_list)
-        # print(block_stats_list)
         count = 0
         # l is block length, t is block trial stats
         for i, (l, t) in enumerate(zip(block_lengths, block_stats_list)):
@@ -511,6 +523,7 @@ class GiveUpTask:
                 if not self.auto_delivery:
                     if self.state == states.IN_WAIT:
                         self.start_consumption()
+                        # self.end_trial()
                     elif self.state == states.IN_BACKGROUND:
                         print("still in back ground, restarting")
                         self.start_background()

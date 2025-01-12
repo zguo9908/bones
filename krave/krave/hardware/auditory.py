@@ -3,6 +3,9 @@ from krave import utils
 # import pulseio
 import RPi.GPIO as GPIO
 import time
+import os
+import platform
+print(platform.platform())
 
 
 class Auditory:
@@ -20,7 +23,16 @@ class Auditory:
         self.buzz_on = False
         self.cue_displaying = False
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.audio_pin, GPIO.OUT)
+
+
+        if os.path.exists("/proc/cpuinfo") and "Raspberry Pi" in open("/proc/cpuinfo").read():
+            print("Running on a Raspberry Pi, initializing GPIO...")
+            GPIO.setup(self.audio_pin, GPIO.OUT)
+        else:
+            print("Not running on a Raspberry Pi.")
+
+
+        # GPIO.setup(self.audio_pin, GPIO.OUT)
         self.cue_on_time = None
         self.buzzer = GPIO.PWM(self.audio_pin, int(self.audio_f))
 

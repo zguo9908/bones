@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="pi@ziyipi5:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="pi@ziyipi2:22 password" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
+      <paths name="pi@10.16.80.18:22 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="pi@ziyipi1:22 password">
         <serverdata>
           <mappings>
@@ -17,10 +24,17 @@
           </mappings>
         </serverdata>
       </paths>
-      <paths name="pi@ziyipi3:22 password">
+      <paths name="pi@ziyipi2:22 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/pi/behavior3" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/pi/behavior2" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@ziyipi4:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/pi/behavior4" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
@@ -35,6 +49,13 @@
         <serverdata>
           <mappings>
             <mapping deploy="/home/pi/behavior5" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@ziyipi8:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/pi/behavior8" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

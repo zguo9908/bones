@@ -4,7 +4,6 @@ from krave import utils
 import RPi.GPIO as GPIO
 import numpy as np
 # import sklearn
-from sklearn.linear_model import LinearRegression
 
 
 class Spout:
@@ -43,7 +42,7 @@ class Spout:
 
     def water_on(self, open_time):
         """turn on water, return time turned on"""
-        for pin in self.reward__pins:
+        for pin in self.reward_pins:
             GPIO.output(pin, GPIO.HIGH)
         self.duration = open_time
         self.water_dispensing = True

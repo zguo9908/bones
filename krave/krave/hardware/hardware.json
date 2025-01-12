@@ -5,17 +5,17 @@
     "password": "Shuler!",
     "pi_user_name": "pi",
     "spouts": {
-      "1": [4,27],
-      "2": [23,24]
-    },
+      "1": [4,5]},
+    "audio": {
+      "1": [22]},
     "recording_spout": {
       "1": [13,5]
     },
-    "spout_to_box": 12,
-    "audio": {
-      "1": [22],
-      "2": [25]
+    "vibration_threshold": {
+      "1": 0.3,
+      "2": 0.3
     },
+    "spout_to_box": 12,
     "camera": 26,
     "camera_to_box": 25,
 

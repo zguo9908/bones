@@ -13,18 +13,18 @@ from krave.experiment.prob_give_up_1port import GiveUpTask
 def main(mouse, exp_name, hardware_config_name):
     pass
 
+use_piezo = False
 
 if __name__ == '__main__':
-    #PiTest("ZG002", "exp1").test_audio(1)
-   # PiTest("ZG000","exp1").test_pi_camera_preview()
-   # PiTest("ZG014", "exp1").test_water(run_time = 30, open_time=0.2, cool_time=0.2, spout=3, test_vibration=True)
-    # PiTest("ZG001", "exp1").test_two_spouts_with_audio(time_limit = 30)
-    # PiTest("RZ002", "exp1").lick_validation(time_limit = 30)
-    #PiTest("RZ001", "exp1").reset()
-   #PiTest("ZG000",'exp1').test_two_lick_detections()
-   #  PiTest("ZG000",'exp1').test_lick_recording()
-   # PiTest("ZG000", 'exp1').test_trigger()
-   GiveUpTask("ZG040", "exp1", "no_block_regular", "param_v2_cue_bg").run()
+    #PiTest("ZG002", "exp1", use_piezo).test_audio(1)
+  #  PiTest("ZG000","exp1", use_piezo).test_pi_camera_preview()
+    PiTest("ZG014", "exp1", use_piezo).test_water(run_time = 30, open_time=0.1, cool_time=0.2)
+    # PiTest("RZ002", "exp1", use_piezo).lick_validation(time_limit = 30)
+    #PiTest("RZ001", "exp1", use_piezo).reset()
+    #PiTest("ZG000",'exp1', use_piezo).test_two_lick_detections()
+  #  PiTest("ZG000",'exp1', use_piezo).test_lick_recording()
+   # PiTest("ZG000", 'exp1',use_piezo).test_trigger()
+    #GiveUpTask("ZG047", "exp1", "no_block_regular", "param_v2_cue_bg", use_piezo=False).run()
 
 
 

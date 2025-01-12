@@ -1,10 +1,18 @@
 # import picamera2
-from picamera import PiCamera
+from picamera import PiCamera, PiCameraMMALError
 
 
 class CameraPi:
     def __init__(self, record_filename):
-        self.camera_pi = PiCamera()
+        try:
+            self.camera_pi = PiCamera()
+            # Your existing configuration
+            print("Camera initialized successfully")
+        except PiCameraMMALError as e:
+            print(f"Camera initialization error: {e}")
+            # Additional diagnostic information
+            print(f"MMAL Status: {e.status}")
+            self.camera_pi = None
         self.camera_pi.awb_mode = 'shade'
         self.camera_pi.color_effects = (128, 128)
         self.camera_pi.resolution = (1280, 720)

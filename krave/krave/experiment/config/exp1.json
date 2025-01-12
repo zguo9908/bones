@@ -6,7 +6,9 @@
   "consumption_time": 2,
   "punishment_time": 3,
   "max_wait_time": 30,
-  "reward_size": {"ziyipi1":[0.2],"ziyipi3": [0.15],"ziyipi5": [0.15]},
+  "reward_size": {"ziyipi1":[0.2],"ziyipi2": [0.03],
+    "ziyipi8": [0.02],"ziyipi4": [0.01]
+  },
   "hardware_setup": "setup1",
   "max_missed_trial": 10,
   "shuffle_blocks": true,
@@ -23,31 +25,71 @@
   "block_length_range": 2,
   "time_bg_range": 0.5,
   "timescape": {
-                "ZG038":
+                "ZG046":
                   {"default":["long","l"], "change":["short","s"]},
-                "ZG039":
+                "ZG047":
                   {"default":["long","l"], "change":["short","s"]},
-                "ZG040":
+                "ZG048":
                   {"default":["short","s"], "change":["long","l"]},
-                "ZG041":
+                "ZG049":
                   {"default":["short","s"], "change":["long","l"]},
-                "ZG042":
+                "ZG050":
                   {"default":["long","s"], "change":["short","l"]},
-                "ZG043":
+                "ZG051":
                   {"default":["long","s"], "change":["short","l"]},
-                "ZG044":
+                "ZG052":
                   {"default":["short","l"], "change":["long","s"]},
-                "ZG045":
+                "ZG053":
+                  {"default":["short","l"], "change":["long","s"]},
+                "ZG054":
+                  {"default":["long","l"], "change":["short","s"]},
+                "ZG055":
+                  {"default":["long","l"], "change":["short","s"]},
+                "ZG056":
+                  {"default":["short","s"], "change":["long","l"]},
+                "ZG057":
+                  {"default":["short","s"], "change":["long","l"]},
+                "ZG058":
+                  {"default":["long","s"], "change":["short","l"]},
+                "ZG059":
+                  {"default":["long","s"], "change":["short","l"]},
+                "ZG060":
+                  {"default":["short","l"], "change":["long","s"]},
+                "ZG061":
                   {"default":["short","l"], "change":["long","s"]}
   },
   "stage": {
-             "ZG038":["default"],
-             "ZG039":["default"],
-             "ZG040":["default"],
-             "ZG041":["default"],
-             "ZG042":["default"],
-             "ZG043":["default"],
-             "ZG044":["default"],
-             "ZG045":["default"]
+             "ZG046":["learn"],
+             "ZG047":["learn"],
+             "ZG048":["learn"],
+             "ZG049":["learn"],
+             "ZG050":["learn"],
+             "ZG051":["learn"],
+             "ZG052":["learn"],
+             "ZG053":["learn"],
+             "ZG054":["learn"],
+             "ZG055":["learn"],
+             "ZG056":["learn"],
+             "ZG057":["learn"],
+             "ZG058":["learn"],
+             "ZG060":["learn"],
+             "ZG061":["learn"]
+  },
+  "training_dist":  {
+             "ZG046":["default"],
+             "ZG047":["default"],
+             "ZG048":["default"],
+             "ZG049":["default"],
+             "ZG050":["default"],
+             "ZG051":["default"],
+             "ZG052":["default"],
+             "ZG053":["default"],
+             "ZG054":["default"],
+             "ZG055":["default"],
+             "ZG056":["default"],
+             "ZG057":["default"],
+             "ZG058":["default"],
+             "ZG060":["default"],
+             "ZG061":["default"]
   }
 }
