@@ -64,11 +64,14 @@ class GiveUpTask:
         self.param = param
         self.calibrate = calibrate
         if hostname == "ziyipi5":
-            self.record = True
+            self.record = self.stage[self.mouse][0] == 'record'
+            use_piezo = True
+            print(f'using piezo {use_piezo}')
         else:
             self.record = record
 
-        # hardwares
+        self.use_piezo = use_piezo
+        print(f'self_piezo {self.use_piezo}')
         self.data_writer = DataWriter(self.mouse, self.exp_name, self.training, self.param,
                                       self.exp_config, forward, hostname,
                                       use_piezo, self.training_stage, self.stage)
@@ -78,20 +81,22 @@ class GiveUpTask:
         if self.hostname in ["ziyipi1", "ziyipi2", "ziyipi4", "ziyipi8"]:
             if use_piezo:
                 self.spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1",
-                                        threshold_method=ThresholdMethod.DYNAMIC_STD,
-                                        dynamic_threshold_multiplier=1.5,
-                                        baseline_window_size=300)
+                            threshold_method=ThresholdMethod.STATIC)
             else:
                 self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
             self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
-
-        # elif self.hostname in ["ziyipi3" , "ziyipi7"]:
-        #     self.spout = Spout(self.mouse, self.hardware_config, spout_name="1")
-        #     self.camera = CameraViewer(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         elif self.hostname == "ziyipi5":
-            self.spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1")
+            # self.spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1")
+            self.spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1",
+                                              threshold_method=ThresholdMethod.STATIC)
+            # self.spout = SpoutPiezo(mouse, self.hardware_config, spout_name='1',
+            #                    threshold_method=ThresholdMethod.ADAPTIVE)
             # self.auditory = Auditory(self.mouse, self.exp_config, self.hardware_config, audio_name="1", trial_type='s')
-            self.trigger = CameraBasler(self.hardware_config, self.data_writer)
+            if self.record:
+                print('is_recording!!!')
+                self.trigger = CameraBasler(self.hardware_config, self.data_writer)
+            else:
+                print("just habituating")
             self.camera = CameraPi(record_filename=f'{mouse}_{training}_{self.data_writer.datetime}.h264')
         else:
             raise Warning("not implemented rig")
@@ -227,7 +232,7 @@ class GiveUpTask:
 
         string = self.get_string_to_log(f'{self.curr_reward_prob},1,lick')
         self.data_writer.log(string)
-        if self.record:
+        if self.use_piezo:
             string_2 = self.get_string_to_log(f'{self.curr_reward_prob},{self.spout.analog},lick')
             self.data_writer.log(string_2)
 
@@ -235,7 +240,7 @@ class GiveUpTask:
         """logs lick ending using data writer"""
         string = self.get_string_to_log('nan,0,lick')
         self.data_writer.log(string)
-        if self.record:
+        if self.use_piezo:
             string_2 = self.get_string_to_log(f'{self.curr_reward_prob},{self.spout.analog},lick')
             self.data_writer.log(string_2)
 
@@ -372,6 +377,8 @@ class GiveUpTask:
         self.bin_num = 0
         print("starting to bin the cdf")
         self.state = states.IN_WAIT
+        self.spout.set_state_threshold(0.013)
+        print(f'current threshold is {self.spout.static_threshold}')
         self.wait_start_time = time.time()
         string = self.get_string_to_log('nan,1,wait')
         self.data_writer.log(string)
@@ -382,6 +389,8 @@ class GiveUpTask:
     def start_background(self):
         """starts background time, logs using data writer, trial does not restart if repeated"""
         self.state = states.IN_BACKGROUND
+        self.spout.set_state_threshold(0.037)
+        print(f'current threshold is {self.spout.static_threshold}')
         self.background_start_time = time.time()
         self.wait_start_time = float('-inf')
         string = self.get_string_to_log('nan,1,background')
@@ -422,7 +431,7 @@ class GiveUpTask:
         # print(f'performance for this session is {self.total_reward_count/self.total_trial_num}%2f')
         string = self.get_string_to_log('nan,0,session')
         self.data_writer.log(string)
-        if self.hostname == "ziyipi5":
+        if self.hostname == "ziyipi5" and self.record:
             self.trigger.shutdown()
         self.camera.shutdown()
         # global stopped
@@ -519,6 +528,9 @@ class GiveUpTask:
             if lick_change == -1:
                 self.log_lick_ending()
             elif lick_change == 1:
+                if self.state == states.IN_BACKGROUND:
+                    print(f'{self.spout.static_threshold}')
+                    # print('lick is detected!!')
                 self.log_lick()
                 if not self.auto_delivery:
                     if self.state == states.IN_WAIT:

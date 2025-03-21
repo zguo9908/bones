@@ -23,9 +23,9 @@ class ThresholdMethod(Enum):
 
 class SpoutPiezo:
     def __init__(self, mouse, hardware_config, spout_name,
-                 threshold_method=ThresholdMethod.DYNAMIC_STD,
-                 static_threshold=0.1,
-                 dynamic_threshold_multiplier=2,
+                 threshold_method=ThresholdMethod.STATIC,
+                 static_threshold=0.013,
+                 dynamic_threshold_multiplier=1,
                  baseline_window_size=500):
         self.mouse = mouse
         self.hardware_config = hardware_config
@@ -116,7 +116,7 @@ class SpoutPiezo:
         # Update adaptive threshold
         self.adaptive_threshold = (alpha * filtered_voltage) + ((1 - alpha) * self.adaptive_threshold)
 
-        return self.adaptive_threshold * 1.5  # Add some sensitivity
+        return self.adaptive_threshold * 0.1  # Add some sensitivity
 
     def _update_baseline_buffer(self, new_value):
         """
@@ -143,6 +143,12 @@ class SpoutPiezo:
 
         return False
 
+    def set_state_threshold(self, threshold):
+        if self.threshold_method == ThresholdMethod.STATIC:
+            self.static_threshold = threshold
+        elif self.threshold_method == ThresholdMethod.DYNAMIC_STD:
+            self.dynamic_threshold_multiplier = threshold
+
     def lick_status_check(self):
         """
         Detect lick events using selected thresholding method
@@ -156,7 +162,9 @@ class SpoutPiezo:
         # Determine threshold based on selected method
         lick_detected = False
         if self.threshold_method == ThresholdMethod.STATIC:
+            # print(f'filtered voltage {filtered_voltage} whereas threshold {self.static_threshold}')
             lick_detected = filtered_voltage > self.static_threshold
+            # print(f'lick is detected {lick_detected}')
 
         elif self.threshold_method == ThresholdMethod.DYNAMIC_STD:
             dynamic_threshold = self._calculate_dynamic_threshold()
@@ -176,16 +184,17 @@ class SpoutPiezo:
             if not self.lick_active:
                 self.lick_active = True
                 self.lick_start_time = current_time
-                print(f"Lick bout started at {self.lick_start_time:.3f} seconds")
+                # print(f"Lick bout started at {self.lick_start_time:.3f} seconds /"
+                #       f"voltage {filtered_voltage} for {self.static_threshold}")
                 return 1
         else:
             if self.lick_active:
                 if current_time - self.lick_start_time >= self.min_lick_duration:
                     self.lick_active = False
                     self.lick_end_time = current_time
-                    print(f"Lick bout ended at {self.lick_end_time:.3f} seconds")
+                    # print(f"Lick bout ended at {self.lick_end_time:.3f} seconds")
                     bout_duration = self.lick_end_time - self.lick_start_time
-                    print(f"Lick bout duration: {bout_duration:.3f} seconds")
+                    # print(f"Lick bout duration: {bout_duration:.3f} seconds")
 
                     self.lick_start_time = None
                     self.lick_end_time = None

@@ -3,7 +3,7 @@ import shutil
 import time
 import os
 import pexpect
-
+import requests
 from krave import utils
 from shutil import rmtree
 
@@ -116,7 +116,14 @@ class DataWriter:
         with open(meta_path, 'w') as json_file:
             json.dump(self.meta, json_file, indent=4)
 
-    def end(self,session_data=None):
+    def post_on_slack(self):
+        try:
+            requests.post(url="https://slack.com/shortcuts/Ft089YV1CBNY/c4c9700a4c6555396d10a44dcc597969",
+                          json=self.meta)
+        except Exception as e:
+            print(f"Error posting on slack: {e}")
+
+    def end(self, session_data=None):
         self.f.close()
         self.update_meta(session_data)
         if self.forward:
@@ -134,3 +141,4 @@ class DataWriter:
                 print('connection back to desktop timed out')
         else:
             print(f'saved locally at {self.data_write_path}')
+        self.post_on_slack()

@@ -60,9 +60,9 @@ class PiTest:
         self.use_piezo = use_piezo
         # self.recording_spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1")
         self.recording_spout = SpoutPiezo(self.mouse, self.hardware_config, spout_name="1",
-                            threshold_method=ThresholdMethod.DYNAMIC_STD,
-                            dynamic_threshold_multiplier=2.5,
-                            baseline_window_size=500)
+                                    threshold_method=ThresholdMethod.STATIC)
+        # self.recording_spout = SpoutPiezo(mouse, self.hardware_config, spout_name='1',
+        #                         threshold_method=ThresholdMethod.ADAPTIVE)
         if hostname in ["ziyipi3",]:
             self.camera = CameraViewer(output_filename="test_recording.h264") # Use 0 for default camera
             # self.camera = CameraViewer('test_video.h264')

@@ -7,7 +7,7 @@
   "punishment_time": 3,
   "max_wait_time": 30,
   "reward_size": {"ziyipi1":[0.2],"ziyipi2": [0.03],
-    "ziyipi8": [0.02],"ziyipi4": [0.01]
+    "ziyipi8": [0.02],"ziyipi4": [0.01], "ziyipi5": [0.07]
   },
   "hardware_setup": "setup1",
   "max_missed_trial": 10,
@@ -59,19 +59,19 @@
                   {"default":["short","l"], "change":["long","s"]}
   },
   "stage": {
-             "ZG046":["learn"],
-             "ZG047":["learn"],
-             "ZG048":["learn"],
-             "ZG049":["learn"],
+             "ZG046":["record"],
+             "ZG047":["record"],
+             "ZG048":["record"],
+             "ZG049":["habituate"],
              "ZG050":["learn"],
              "ZG051":["learn"],
              "ZG052":["learn"],
              "ZG053":["learn"],
              "ZG054":["learn"],
              "ZG055":["learn"],
-             "ZG056":["learn"],
+             "ZG056":["habituate"],
              "ZG057":["learn"],
-             "ZG058":["learn"],
+             "ZG058":["habituate"],
              "ZG060":["learn"],
              "ZG061":["learn"]
   },
